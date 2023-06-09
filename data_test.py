@@ -71,8 +71,7 @@ valid_mods=['mocap', 'zed_camera_left']
 
 valid_nodes=[1,2,3,4]
 
-data_root = '/home/iobt/Desktop/ssd2/mmm/2022-09-01/trucks1_lightsT_obstaclesF/train'
-
+data_root = 'data/mmm/2022-09-01/trucks1_lightsT_obstaclesF/train'
 trainset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         hdf5_fnames=[

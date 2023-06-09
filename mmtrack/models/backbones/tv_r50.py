@@ -140,35 +140,6 @@ class TVResNet50CrossAttn(BaseModule):
         return (global_pos_embeds, )
 
 @BACKBONES.register_module()
-class TVResNet50(BaseModule):
-    def __init__(self, 
-                 out_channels=256,
-                 norm_cfg=dict(type='BN')
-        ):
-        super().__init__()
-        self.stem = ResNet50Stem(frozen=True)
-        self.layers = nn.Sequential(
-            nn.Conv2d(64, out_channels, kernel_size=7, stride=2, padding=3),
-            build_norm_layer(norm_cfg, out_channels)[1],
-
-            ConvNeXtBlock(out_channels, layer_scale_init_value=0.0),
-            
-            nn.Conv2d(out_channels, out_channels, kernel_size=7, stride=2, padding=3),
-            build_norm_layer(norm_cfg, out_channels)[1],
-            
-            ConvNeXtBlock(out_channels, layer_scale_init_value=0.0),
-            
-            nn.Conv2d(out_channels, out_channels, kernel_size=7, stride=2, padding=3),
-            build_norm_layer(norm_cfg, out_channels)[1]
-        )
-               
-    def forward(self, x):
-        x = self.stem(x)
-        x = self.layers(x)
-        return (x, )
-        
-
-@BACKBONES.register_module()
 class AudioBackbone(BaseModule):
     def __init__(self, 
                  input_dim=4,

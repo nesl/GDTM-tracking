@@ -84,13 +84,11 @@ class DataCacher(object):
         self.include_z = include_z
         self.hdf5_fnames = hdf5_fnames
         self.fps = fps
-        # import pdb; pdb.set_trace()
-        self.class2idx = {'truck': 1, 'node': 0}
+        self.class2idx = {'truck': 1,'red_car': 1,'green_car': 1, 'node': 0}
         self.fifths = fifths
         # self.max_len = max_len
 
     def cache(self):
-        pastK = []
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir, exist_ok=False)
             data = {}
@@ -99,15 +97,12 @@ class DataCacher(object):
                 for ms, val in chunk.items():
                     if ms in data.keys():
                         for k, v in val.items():
-                            if k not in pastK:
-                                pastK.append(k)
                             if k in data[ms].keys():
                                 data[ms][k].update(v)
                             else:
                                 data[ms][k] = v
                     else:
                         data[ms] = val
-   
 
             buffers = self.fill_buffers(data)
             self.active_keys = sorted(buffers[-1].keys())
@@ -150,8 +145,10 @@ class DataCacher(object):
     def fill_buffers(self, all_data):
         buffers = []
         buff = {}
-        # factor = 100 // self.fps
+        # factor = 100 // self.fps 
         factor = 1
+        print("Warning: For new data factor has to be changed to 1! Did you do that?")
+        # factor = 1
         num_frames = 0
         keys = sorted(list(all_data.keys()))
         prev_num_objs = None
@@ -161,26 +158,21 @@ class DataCacher(object):
             for key in data.keys():
                 if key == 'mocap':
                     mocap_data = json.loads(data['mocap'])
+                    #Sort mocap code by IDs to ensure node positions are consistent
+                    #import pdb; pdb.set_trace()
                     if self.normalized_position:
                         gt_pos = torch.tensor([d['normalized_position'] for d in mocap_data])
                     else:
-                        gt_pos = torch.tensor([d['position'] for d in mocap_data])  
+                        gt_pos = torch.tensor([d['position'] for d in mocap_data])
                         if not torch.sum(torch.isnan(gt_pos)): # a temp fix of the OptiTrack NaN issue
                             last_known_pos = gt_pos
                         else:
-                            for pos_row in range(gt_pos.shape[0]):  
+                            for pos_row in range(gt_pos.shape[0]):
                                 for pos_col in range(gt_pos.shape[1]):
                                     if torch.isnan(gt_pos[pos_row, pos_col]):
-                                        gt_pos[pos_row, pos_col] = last_known_pos[pos_row, pos_col] 
-                        # gt_pos[..., 0] += np.abs(self.min_x)
-                        # gt_pos[..., 1] += np.abs(self.min_y)
-                        # gt_pos[..., 2] += np.abs(self.min_z)
-                        # for UMNASS data, change mm to meters
-                        # gt_pos /= 1000
-                        # for UCLA data, swap y and z axis
-                        temp = gt_pos[...,1]
-                        gt_pos[...,1] = gt_pos[...,2]
-                        gt_pos[...,2] = temp
+                                        gt_pos[pos_row, pos_col] = last_known_pos[pos_row, pos_col]
+                    
+                    gt_pos[:,1] = gt_pos[:,2] # OptiTrack car runs in X-Z
                     gt_rot = torch.tensor([d['rotation'] for d in mocap_data])
                     
                     corners, grids = [], []
@@ -198,6 +190,7 @@ class DataCacher(object):
 
                     corners = np.stack(corners)
                     corners = torch.tensor(corners).float()
+
                     gt_labels = torch.tensor([self.class2idx[d['type']] for d in mocap_data])
                     gt_ids = torch.tensor([d['id'] for d in mocap_data])
                     is_node = gt_labels == 0
@@ -212,10 +205,21 @@ class DataCacher(object):
                     gt_pos = gt_pos[final_mask] * 100
                     gt_grid = grids[final_mask] * 100
                     gt_rot = gt_rot[final_mask] 
-                    gt_ids = gt_ids[final_mask] - 3
+                    gt_ids = gt_ids[final_mask] - 4
                     for ii in range(len(gt_ids)):
-                        gt_ids[ii] = 0 # assuming only one car in the scene
-                   
+                        gt_ids[ii] = 0 # assuming only one object
+                    # if len(gt_pos) < 2:
+                        # zeros = torch.zeros(2 - len(gt_pos), gt_pos.shape[-1])
+                        # gt_pos = torch.cat([gt_pos, zeros - 1])
+                        
+                        # zeros = torch.zeros(2 - len(gt_grid), 450, 2)
+                        # gt_grid = torch.cat([gt_grid, zeros - 1])
+
+                        # zeros = torch.zeros(2 - len(gt_rot), 9)
+                        # gt_rot = torch.cat([gt_rot, zeros - 1])
+                        
+                        # zeros = torch.zeros(2 - len(gt_ids))
+                        # gt_ids = torch.cat([gt_ids, zeros - 1])
                         
                     buff[('mocap', 'mocap')] = {
                         'gt_positions': gt_pos,

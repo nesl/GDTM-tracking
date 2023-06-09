@@ -17,7 +17,6 @@ class DecodeJPEG(object):
         img = cv2.imdecode(code, 1)
         return img
 
-
 @PIPELINES.register_module()
 class LoadAudio(object):
     def __init__(self, n_fft=400):
@@ -32,9 +31,9 @@ class LoadAudio(object):
         sgram = sgram.permute(0, 2, 3, 1).squeeze()
         sgram = sgram.numpy()
         results = {
-            'img': sgram,
+            'img': sgram, 
             'img_shape': sgram.shape,
-            'ori_shape': sgram.shape,
+            'ori_shape': sgram.shape, 
             'img_fields': ['img'],
             'filename': 'placeholder.jpg',
             'ori_filename': 'placeholder.jpg'
@@ -63,9 +62,9 @@ class LoadFromNumpyArray(object):
             array = np.concatenate([array, array, array], axis=-1)
         array = np.nan_to_num(array, nan=0.0)
         results = {
-            'img': array,
+            'img': array, 
             'img_shape': array.shape,
-            'ori_shape': array.shape,
+            'ori_shape': array.shape, 
             'img_fields': ['img'],
             'filename': 'placeholder.jpg',
             'ori_filename': 'placeholder.jpg'
