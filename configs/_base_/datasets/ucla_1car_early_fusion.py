@@ -150,7 +150,7 @@ valset=dict(type='HDF5Dataset',
     pipelines=pipelines,
 )
 
-data_root = '~/Desktop/ssd4t/mcp-sample-dataset/test'
+data_root = '~/Desktop/mcp-sample-dataset/test'
 testset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         hdf5_fnames=[
