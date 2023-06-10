@@ -104,7 +104,7 @@ The final data structure should be like following:
 ```
 Note that you only need test/ if you are running test from checkpoints only.
 #### Specify Filepath
-Open mmmtracking/configs/\_base\_/datasets/ucla_sample_1car.py
+Open mmtracking/configs/\_base\_/datasets/ucla_sample_1car.py
 In Line 75, Line 114, and Line 153, change the data_root to absolute path:
 e.g. ~/Desktop/... -> /home/USER_NAME/Desktop/...
 
