@@ -72,7 +72,7 @@ valid_mods=['mocap', 'zed_camera_left', 'zed_camera_depth', 'zed_camera_left_r50
 
 valid_nodes=[1,2,3]
 
-data_root = '/home/ziqi/Desktop/ssd4t/mcp-sample-dataset/train'
+data_root = '~/Desktop/mcp-sample-dataset/train'
 trainset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         hdf5_fnames=[
@@ -111,7 +111,7 @@ trainset=dict(type='HDF5Dataset',
     pipelines=pipelines,
 )
 
-data_root = '/home/ziqi/Desktop/ssd4t/mcp-sample-dataset/val'
+data_root = '~/Desktop/mcp-sample-dataset/val'
 valset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         hdf5_fnames=[
@@ -150,7 +150,7 @@ valset=dict(type='HDF5Dataset',
     pipelines=pipelines,
 )
 
-data_root = '/home/ziqi/Desktop/ssd4t/mcp-sample-dataset/test'
+data_root = '~/Desktop/ssd4t/mcp-sample-dataset/test'
 testset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         hdf5_fnames=[
