@@ -322,7 +322,7 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
         with open(calib_fname, 'r') as f:
             data = json.load(f)
 
-        min_idx = {'det_result_%d' % (i + 1): (None, 1e20) for i in range(6)}
+        min_idx = {'det_result_%d' % (i + 1): (None, 1e20) for i in range(3)}
 
         for a_b, res1 in data.items():
             if a_b == 'uncalibrated':

@@ -8,7 +8,7 @@ trainset=dict(type='HDF5Dataset',
         num_future_frames=0,
         num_past_frames=9,
         valid_nodes=[1,2,3],
-        valid_mods=['mocap', 'realsense_camera_img', 'realsense_camera_depth'],
+        valid_mods=['mocap', 'realsense_camera_img'],
         min_x=-1.5, max_x=2.5,
         min_y=0, max_y=1,
         min_z=-1.5, max_z=2.5,
@@ -22,7 +22,7 @@ valset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         cache_dir='/dev/shm/cache_val/',
         valid_nodes=[1,2,3],
-        valid_mods=['mocap', 'realsense_camera_img', 'realsense_camera_depth'],
+        valid_mods=['mocap', 'realsense_camera_img'],
         min_x=-1.5, max_x=2.5,
         min_y=0, max_y=1,
         min_z=-1.5, max_z=2.5,
@@ -41,7 +41,7 @@ testset=dict(type='HDF5Dataset',
         min_y=0, max_y=1,
         min_z=-1.5, max_z=2.5,
         valid_nodes=[1,2,3],
-        valid_mods=['mocap', 'realsense_camera_img', 'realsense_camera_depth'],
+        valid_mods=['mocap', 'realsense_camera_img'],
         include_z=True,
     ),
     num_future_frames=0,
@@ -71,42 +71,15 @@ backbone_cfg_img = [
     )
 ]
 
-backbone_cfg_depth = [
-    dict(type='ResNet',
-        depth=50,
-        num_stages=4,
-        out_indices=(3, ),
-        frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=False),
-        norm_eval=True,
-        style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50'),
-    ),
-    dict(type='ChannelMapper',
-        in_channels=[2048],
-        kernel_size=1,
-        out_channels=256,
-        act_cfg=None,
-        norm_cfg=dict(type='GN', num_groups=32),
-        num_outs=1
-    )
-]
 
 
 model_cfg_img=dict(type='LinearEncoder', in_len=135, out_len=1,
         ffn_cfg=dict(type='SLP', in_channels=256))
 
-model_cfg_depth = dict(type='LinearEncoder', in_len=108, out_len=1,
-        ffn_cfg=dict(type='SLP', in_channels=256))
+model_cfgs = {('realsense_camera_img'): model_cfg_img}
 
 
-model_cfgs = {('realsense_camera_img'): model_cfg_img,
-              ('realsense_camera_depth'): model_cfg_depth
-            }
-
-
-backbone_cfgs = {'realsense_camera_img': backbone_cfg_img, 'realsense_camera_depth' : backbone_cfg_depth
-}
+backbone_cfgs = {'realsense_camera_img': backbone_cfg_img}
 
 model = dict(type='KFDETR',
         output_head_cfg=dict(type='OutputHead',
