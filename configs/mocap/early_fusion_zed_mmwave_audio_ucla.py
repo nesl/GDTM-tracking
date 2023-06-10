@@ -2,7 +2,9 @@ _base_ = [
     '../_base_/datasets/ucla_1car_early_fusion.py'
 ]
 
-valid_mods=['mocap', 'zed_camera_left','range_doppler', 'mic_waveform', "realsense_camera_depth"]
+# valid_mods=['mocap', 'zed_camera_left','range_doppler', 'mic_waveform', "realsense_camera_depth"]
+valid_mods=['zed_camera_left']
+
 
 trainset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
@@ -86,32 +88,32 @@ depth_r50_cfg=[
 ]
 
 backbone_cfgs = {
-    'zed_camera_left': r50_cfg, 
-    "realsense_camera_depth": depth_r50_cfg,
-    'range_doppler': dict(type='mmWaveBackbone'),
-    'mic_waveform': dict(type='AudioBackbone'),
+    'zed_camera_left': r50_cfg
+    #"realsense_camera_depth": depth_r50_cfg,
+    #'range_doppler': dict(type='mmWaveBackbone'),
+   # 'mic_waveform': dict(type='AudioBackbone'),
 }
 
-depth_cfg=dict(type='LinearEncoder', in_len=108, out_len=108, use_pos_encodings=True, ffn_cfg=dict(type='SLP', in_channels=512))
+#depth_cfg=dict(type='LinearEncoder', in_len=108, out_len=108, use_pos_encodings=True, ffn_cfg=dict(type='SLP', in_channels=512))
 zed_cfg=dict(type='LinearEncoder', in_len=135, out_len=135, use_pos_encodings=True, ffn_cfg=dict(type='SLP', in_channels=512))
-rdoppler_cfg=dict(type='LinearEncoder', in_len=16, out_len=16, use_pos_encodings=True, ffn_cfg=dict(type='SLP', in_channels=512))
-audio_cfg=dict(type='LinearEncoder', in_len=16, out_len=16, use_pos_encodings=True, ffn_cfg=dict(type='SLP', in_channels=512))
+#rdoppler_cfg=dict(type='LinearEncoder', in_len=16, out_len=16, use_pos_encodings=True, ffn_cfg=dict(type='SLP', in_channels=512))
+#audio_cfg=dict(type='LinearEncoder', in_len=16, out_len=16, use_pos_encodings=True, ffn_cfg=dict(type='SLP', in_channels=512))
 
 adapter_cfgs = {
-    ('realsense_camera_depth', 'node_1'): depth_cfg,
-    ('realsense_camera_depth', 'node_2'): depth_cfg,
-    ('realsense_camera_depth', 'node_3'): depth_cfg,
+    # ('realsense_camera_depth', 'node_1'): depth_cfg,
+    # ('realsense_camera_depth', 'node_2'): depth_cfg,
+    # ('realsense_camera_depth', 'node_3'): depth_cfg,
     ('zed_camera_left', 'node_1'): zed_cfg,
     ('zed_camera_left', 'node_2'): zed_cfg,
     ('zed_camera_left', 'node_3'): zed_cfg,
  #   ('zed_camera_left', 'node_4'): zed_cfg,
-    ('range_doppler', 'node_1'): rdoppler_cfg,
-    ('range_doppler', 'node_2'): rdoppler_cfg,
-    ('range_doppler', 'node_3'): rdoppler_cfg,
- #   ('range_doppler', 'node_4'): rdoppler_cfg,
-    ('mic_waveform', 'node_1'): audio_cfg,
-    ('mic_waveform', 'node_2'): audio_cfg,
-    ('mic_waveform', 'node_3'): audio_cfg,
+#     ('range_doppler', 'node_1'): rdoppler_cfg,
+#     ('range_doppler', 'node_2'): rdoppler_cfg,
+#     ('range_doppler', 'node_3'): rdoppler_cfg,
+#  #   ('range_doppler', 'node_4'): rdoppler_cfg,
+#     ('mic_waveform', 'node_1'): audio_cfg,
+#     ('mic_waveform', 'node_2'): audio_cfg,
+#     ('mic_waveform', 'node_3'): audio_cfg,
  #   ('mic_waveform', 'node_4'): audio_cfg
 
 }

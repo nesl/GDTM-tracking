@@ -29,6 +29,7 @@ mmtrack/.mim/configs/_base_/datasets/mot20.py
 mmtrack/.mim/configs/_base_/datasets/mot_challenge.py
 mmtrack/.mim/configs/_base_/datasets/mot_challenge_det.py
 mmtrack/.mim/configs/_base_/datasets/mot_challenge_reid.py
+mmtrack/.mim/configs/_base_/datasets/ucla_1car_early_fusion.py
 mmtrack/.mim/configs/_base_/datasets/youtube_vis.py
 mmtrack/.mim/configs/_base_/datasets/mmm/2022-09-01/trucks0_lightsT_obstaclesF.py
 mmtrack/.mim/configs/_base_/datasets/mmm/2022-09-01/trucks1_lightsF_obstaclesF.py
@@ -79,6 +80,10 @@ mmtrack/.mim/configs/det/faster-rcnn_r50_fpn_4e_mot17-half.py
 mmtrack/.mim/configs/det/faster-rcnn_r50_fpn_4e_mot17.py
 mmtrack/.mim/configs/det/faster-rcnn_r50_fpn_8e_mot20-half.py
 mmtrack/.mim/configs/det/faster-rcnn_r50_fpn_8e_mot20.py
+mmtrack/.mim/configs/mocap/early_fusion.py
+mmtrack/.mim/configs/mocap/early_fusion_zed_mmwave.py
+mmtrack/.mim/configs/mocap/early_fusion_zed_mmwave_audio.py
+mmtrack/.mim/configs/mocap/early_fusion_zed_mmwave_audio_ucla.py
 mmtrack/.mim/configs/mocap/trucks1_lightsF_obstaclesT_zed_nodes1234_det.py
 mmtrack/.mim/configs/mocap/trucks1_lightsF_obstaclesT_zed_nodes1234_det_kf.py
 mmtrack/.mim/configs/mocap/trucks1_lightsF_obstaclesT_zed_nodes1234_detr.py
@@ -92,6 +97,7 @@ mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_nodes1234_detr_kf.py
 mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_nodes1234_r50.py
 mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_nodes1234_r50_kf.py
 mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_nodes1234_yolo.py
+mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_range_nodes1234_r50.py
 mmtrack/.mim/configs/mocap/cfgs_2023_02_08/trucks1_lightsF_obstaclesF_range_nodes1234.py
 mmtrack/.mim/configs/mocap/cfgs_2023_02_08/trucks1_lightsF_obstaclesF_zed_nodes1234.py
 mmtrack/.mim/configs/mocap/cfgs_2023_02_08/trucks1_lightsF_obstaclesT_range_nodes1234.py
@@ -283,9 +289,13 @@ mmtrack/.mim/tools/test.py
 mmtrack/.mim/tools/test_from_config.sh
 mmtrack/.mim/tools/test_from_config_grid.sh
 mmtrack/.mim/tools/test_from_config_nll.sh
+mmtrack/.mim/tools/test_from_config_nll_local.sh
 mmtrack/.mim/tools/train.py
+mmtrack/.mim/tools/train_from_ckpt_local.sh
 mmtrack/.mim/tools/train_from_config.sh
+mmtrack/.mim/tools/train_from_config_local.sh
 mmtrack/.mim/tools/val_from_config.sh
+mmtrack/.mim/tools/val_from_config_local.sh
 mmtrack/.mim/tools/analysis/analyze_logs.py
 mmtrack/.mim/tools/analysis/benchmark.py
 mmtrack/.mim/tools/analysis/print_config.py
@@ -404,10 +414,14 @@ mmtrack/models/mocap/decoder.py
 mmtrack/models/mocap/decoderv2.py
 mmtrack/models/mocap/decoderv3.py
 mmtrack/models/mocap/decoderv4.py
+mmtrack/models/mocap/early_fusion.py
+mmtrack/models/mocap/early_fusion_attn_weights.py
+mmtrack/models/mocap/early_fusion_saliency.py
 mmtrack/models/mocap/kfdetr.py
 mmtrack/models/mocap/knn.py
 mmtrack/models/mocap/oracle.py
 mmtrack/models/mocap/output_head.py
+mmtrack/models/mocap/output_head_old.py
 mmtrack/models/mocap/single.py
 mmtrack/models/mocap/tracker.py
 mmtrack/models/mocap/trackformer.py
@@ -475,3 +489,4 @@ requirements/mminstall.txt
 requirements/readthedocs.txt
 requirements/runtime.txt
 requirements/tests.txt
+tests/test_version.py

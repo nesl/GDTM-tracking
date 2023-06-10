@@ -279,7 +279,6 @@ class EarlyFusion(BaseMocapModel):
         #B, T, num_views, L, D = all_embeds.shape
         #all_embeds = all_embeds.reshape(B, T, num_views*L, D)
         B, T, L, D = all_embeds.shape
-        
         all_outputs = []
         #for q in range(num_views):
         for i in range(B):
@@ -292,7 +291,6 @@ class EarlyFusion(BaseMocapModel):
                 #output = self.output_head(all_embeds[i,j,q].unsqueeze(0))
                 output = self.output_head(det_embed.unsqueeze(0))
                 dist = output['dist']
-                
                 if self.loss_type == 'grid':
                     grid = gt_grids[i][j]
                     No, G, f = grid.shape
@@ -317,9 +315,11 @@ class EarlyFusion(BaseMocapModel):
                     pos_loss += pos_neg_log_probs[pred_idx, gt_idx]
                     # rot_loss += rot_dists[pred_idx, gt_idx]
                     count += 1
+                
                 pos_loss /= count
                 rot_loss /= count
-                pos_loss = pos_loss * self.pos_loss_weight
+                pos_loss = pos_loss * self.pos_loss_weight     
+                # Todo - does not work: Ziqi added it here to prevent a large cov + torch.sum(torch.abs((dist.covariance_matrix))) * 0.03  
                 losses['pos_loss'].append(pos_loss)
                 #losses['rot_loss'].append(rot_loss)
 

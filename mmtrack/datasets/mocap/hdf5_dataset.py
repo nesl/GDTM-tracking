@@ -355,7 +355,8 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
             calib_outputs = self.calibrate_outputs(outputs, eval_kwargs['calib_file'], eval_kwargs['calib_metric'])
             res, vid_outputs = self.track_eval(calib_outputs, gt)
             grid_res['calibrated'] = res
-	#CHANGED
+        
+         #CHANGED
         if 'calib_file' in eval_kwargs.keys():
             absErrorFile = f'{logdir}/mean.txt'
             with open(absErrorFile, 'w') as f:
@@ -367,7 +368,8 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
                     f.write(str(error) + "\n")
                 f.write("The mean is " + str(total / len(gt['all_gt_pos'])) + "\n")
                 f.write("The nll loss is " + str(np.median(grid_res['calibrated']['track_result']['nll_vals'])))
-                f.close()	
+                f.close()
+
         fname = f'{logdir}/res.json'
         with open(fname, 'w') as f:
             json.dump(grid_res, f)
@@ -554,15 +556,11 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
                 if mod == 'mic_waveform':
                     axes[key].clear()
                     axes[key].set_title(key)
-                    axes[key].set_ylim(-0.2,1)
+                    axes[key].set_ylim(-1,1)
                     img = data[key]#['img'].data[0].cpu().squeeze().numpy()
-                    max_val = img[0].max()
-                    min_val = img[0].min()
-                    if max_val == min_val:
-                        visual_sig = np.zeros(img[0].shape)
-                    else:
-                        visual_sig = (img[0] - min_val) / (max_val - min_val)
-                    axes[key].plot(visual_sig, color='black')
+                    # max_val = img[0].max()
+                    # min_val = img[0].min()
+                    axes[key].plot(img[0], color='black')
 
             if save_frame:
                 fig.canvas.draw()
