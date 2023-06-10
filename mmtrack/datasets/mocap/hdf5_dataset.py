@@ -27,6 +27,7 @@ from .viz import init_fig, gen_rectange, gen_ellipse, rot2angle, points_in_rec
 from mmtrack.datasets import build_dataset
 import torch.nn.functional as F
 from tracker import TorchMultiObsKalmanFilter
+import sys
 
 font = {#'family' : 'normal',
         'weight' : 'bold',
@@ -62,17 +63,17 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
         self.node_pos = None
         self.node_ids = None
         self.colors = ['red', 'green', 'orange', 'black', 'yellow', 'blue']
-        
+
         self.pipelines = {}
         for mod, cfg in pipelines.items():
             self.pipelines[mod] = Compose(cfg)
 
         self.test_mode = test_mode
         self.flag = np.zeros(len(self), dtype=np.uint8) #ones?
-    
+
     def __len__(self):
         return len(self.fnames)
-    
+
     def apply_pipelines(self, buff):
         new_buff = {}
         for key, val in buff.items():
@@ -87,12 +88,12 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
         with open(self.fnames[ind], 'rb') as f:
             buff = pickle.load(f)
         return buff
-    
+
     def __getitem__(self, ind, apply_pipelines=True):
         new_buff = self.read_buff(ind)
         if apply_pipelines:
             new_buff = self.apply_pipelines(new_buff)
-        
+
         idx_set = torch.arange(len(self))
         start_idx = max(0, ind - self.num_past_frames)
         past_idx = idx_set[start_idx:ind]
@@ -107,7 +108,7 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
         if len(future_idx) < self.num_future_frames:
             zeros = torch.zeros(self.num_future_frames- len(future_idx)).long()
             future_idx = torch.cat([future_idx, zeros + len(self) - 1])
-        
+
         buffs = []
         for idx in past_idx:
             buff = self.read_buff(idx)
@@ -121,7 +122,7 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
             buffs.append(buff)
         return buffs
 
-    
+
     def collect_gt(self):
         all_gt_pos, all_gt_labels, all_gt_ids, all_gt_rot, all_gt_grids = [], [], [], [], []
         for i in trange(len(self)):
@@ -158,7 +159,7 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
         res['nll'] = []
         res['num_tracker_dets'] = 0
 
-        from mmtrack.models.mocap.decoderv3 import calc_grid_loss 
+        from mmtrack.models.mocap.decoderv3 import calc_grid_loss
         all_probs, all_dists = [], []
         for i in range(res['num_timesteps']):
             pred_means = outputs['track_means'][i]
@@ -169,10 +170,10 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
             gt_pos = all_gt_pos[i]
             gt_rot = all_gt_rot[i]
             gt_grid = all_gt_grids[i]
-            
+
             # dist = D.MultivariateNormal(pred_means.unsqueeze(0), pred_covs.unsqueeze(0))
             # loss_vals = calc_grid_loss(dist, gt_grid)
-            
+
             dists, probs = [], []
             scores = []
             grid_scores = []
@@ -184,7 +185,7 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
                 dist = D.MultivariateNormal(pred_means[j], pred_covs[j])
                 # dist = D.Independent(dist, 1) #Nq independent Gaussians
                 # samples = dist.sample([10000])
-                
+
                 num_gt = len(gt_pos)
                 for k in range(num_gt):
                     grid = gt_grid[k]
@@ -194,7 +195,7 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
                     # log_probs = dist.log_prob(grid) #*1.5
                     # logsum = torch.logsumexp(log_probs.flatten(), dim=0)
                     # scores.append(logsum.exp())
-                    
+
                     nll.append(dist.log_prob(pos))
                     samples = dist.sample([1000])
                     angle = rot2angle(gt_rot[k], return_rads=False)
@@ -224,17 +225,17 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
             res['nll'].append(nll)
             # all_dists.append(dists)
             # all_probs.append(probs)
-        
+
         scores = np.stack(res['similarity_scores']).squeeze()
         # grid_scores = np.stack(res['grid_scores']).squeeze()
         nll = np.stack(res['nll']).squeeze()
         #logdir = eval_kwargs['logdir']
         #fname = f'{logdir}/res.json'
-        #met=CLEAR({'THRESHOLD': 1-(0.3/self.max_len)}) 
+        #met=CLEAR({'THRESHOLD': 1-(0.3/self.max_len)})
         met = CLEAR({'THRESHOLD': 0.5, 'PRINT_CONFIG': False})
         out = met.eval_sequence(res)
         out = {k : float(v) for k,v in out.items()}
-        
+
         hmet = HOTA()
         hout = hmet.eval_sequence(res)
         means = {k + '_mean' : v.mean() for k, v in hout.items()}
@@ -255,6 +256,11 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
         return out
 
     def track_eval(self, outputs, gt):
+        #For the video, we want gt to only have two coordinates, get rid of one dim
+        #Also, only retain the x and z dimensions
+        if (gt['all_gt_pos'].shape[-1] == 3):
+            gt['all_gt_pos'] = gt['all_gt_pos'][..., 0:3:2]
+
         res = {}
         kf = TorchMultiObsKalmanFilter(dt=1, std_acc=1)
         with torch.no_grad():
@@ -262,6 +268,10 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
         track_means = track_output[0].t()
         track_covs = track_output[1].permute(2, 0, 1)
         num_views = outputs['det_means'][0].shape[-1]
+
+        #Since include z is true, gt will have three values (x, y, z)
+        #For each camera view, means is transpose, so we get the ith column of each tensor to recover
+        #the mean
         for i in range(num_views):
             means = [mu[:, i].unsqueeze(0) for mu in outputs['det_means']]
             covs = [cov[i].unsqueeze(0) for cov in outputs['det_covs']]
@@ -272,13 +282,15 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
         means = [mu.unsqueeze(0) for mu in track_means]
         covs = [cov.unsqueeze(0) for cov in track_covs]
         new_outputs = {'track_means': means, 'track_covs': covs, 'track_ids': track_ids}
+
         eval_res = self.eval_mot(new_outputs, gt)
         res['track_result'] = eval_res
         vid_outputs = new_outputs
         vid_outputs['det_means'] = outputs['det_means']
         vid_outputs['det_covs'] = outputs['det_covs']
         return res, vid_outputs
-    
+
+    #Called by the validation function?
     def grid_search(self, outputs, gt):
         res = {}
         a_range = np.linspace(1, 10, 10).tolist()
@@ -301,6 +313,7 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
                 try:
                     vals, _ = self.track_eval(new_outputs, gt)
                 except:
+                    print(sys.exc_info())
                     import ipdb; ipdb.set_trace() # noqa
                 res['%s_%s' % (a,b)] = vals
         return res
@@ -308,7 +321,8 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
     def calibrate_outputs(self, outputs, calib_fname, metric='nll'):
         with open(calib_fname, 'r') as f:
             data = json.load(f)
-        min_idx = {'det_result_%d' % (i + 1): (None, 1e20) for i in range(3)}
+
+        min_idx = {'det_result_%d' % (i + 1): (None, 1e20) for i in range(6)}
 
         for a_b, res1 in data.items():
             if a_b == 'uncalibrated':
@@ -346,16 +360,17 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
         if eval_kwargs['grid_search']:
             grid_res = self.grid_search(outputs, gt)
         logdir = eval_kwargs['logdir']
-        
+
         res, vid_outputs = self.track_eval(outputs, gt)
         grid_res['uncalibrated'] = res
-        
+
         if 'calib_file' in eval_kwargs.keys():
             calib_outputs = self.calibrate_outputs(outputs, eval_kwargs['calib_file'], eval_kwargs['calib_metric'])
             res, vid_outputs = self.track_eval(calib_outputs, gt)
             grid_res['calibrated'] = res
-            
-         #CHANGED
+
+
+        #CHANGED
         if 'calib_file' in eval_kwargs.keys():
             absErrorFile = f'{logdir}/mean.txt'
             with open(absErrorFile, 'w') as f:
@@ -378,7 +393,7 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
             self.write_video(vid_outputs, **eval_kwargs)
         return res
 
-    def write_video(self, outputs=None, **eval_kwargs): 
+    def write_video(self, outputs=None, **eval_kwargs):
         logdir = eval_kwargs['logdir']
         video_length = len(self)
         if 'video_length' in eval_kwargs.keys():
@@ -396,7 +411,7 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
             colors.extend(['green', 'red', 'black', 'yellow'])
 
         frame_count = 0
-        
+
         id2dist = defaultdict(list)
         for i in trange(video_length):
             data = self[i][-1] #get last frame, eval shouldnt have future
@@ -416,13 +431,19 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
 
                     num_nodes = len(val['node_pos'])
                     for j in range(num_nodes):
-                        pos = val['node_pos'][j] + 250
+                        pos = val['node_pos'][j]
                         node_id = val['node_ids'][j] + 1
-                        axes[key].scatter(pos[0], pos[1], marker='$N%d$' % node_id, color='black', lw=1, s=20*4**2)
-                    
+                        pos = pos + 250
+                        # don't forget to swap y-z axis due to mocap-optitrack format mismatch
+                        axes[key].scatter(pos[0], pos[2], marker='$N%d$' % node_id, color='black', lw=1, s=20*4**2)
+
                     num_gt = len(val['gt_positions'])
                     for j in range(num_gt):
-                        pos = val['gt_positions'][j] + 250
+                        pos = val['gt_positions'][j]
+
+                        #TODO CHEKC THIS
+                        pos = pos[0:3:2]
+                        pos = pos + 250
                         if pos[0] == -1:
                             continue
                         rot = val['gt_rot'][j]
@@ -430,41 +451,47 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
                         grid = val['gt_grids'][j]
                         marker = markers[ID]
                         color = colors[ID]
-                        
-                        axes[key].scatter(pos[0], pos[1], marker=markers[ID], color=color) 
-                        
+
+                        axes[key].scatter(pos[0], pos[1], marker=markers[ID], color=color)
+
                         angle = rot2angle(rot, return_rads=False)
                         rec, _ = gen_rectange(pos, angle, w=self.truck_w, h=self.truck_h, color=color)
                         axes[key].add_patch(rec)
 
                         r=self.truck_w/2
                         axes[key].arrow(pos[0], pos[1], r*rot[0], r*rot[1], head_width=0.05*100, head_length=0.05*100, fc=color, ec=color)
-                            
-                    if outputs is not None: 
+
+                    if outputs is not None:
                         if len(outputs['det_means']) > 0:
-                            pred_means = outputs['det_means'][i].t() + 250
+                            pred_means = outputs['det_means'][i].t()
                             pred_covs = outputs['det_covs'][i]
                             for j in range(len(pred_means)):
                                 mean = pred_means[j].cpu()
+                                mean = mean + 250
                                 cov = pred_covs[j].cpu()
                                 ID = str(j+1)
                                 axes[key].scatter(mean[0], mean[1], color='black', marker='$%s$' % ID, lw=1, s=20*4**2)
                                 ellipse = gen_ellipse(mean, cov, edgecolor='black', fc='None', lw=2, linestyle='--')
                                 axes[key].add_patch(ellipse)
-                        
+
                         # if 'track_means' in outputs.keys() and len(outputs['track_means'][i]) > 0:
-                        pred_means = outputs['track_means'][i] + 250
+                        pred_means = outputs['track_means'][i]
                         pred_covs = outputs['track_covs'][i]
                         #pred_rots = outputs['track_rot'][i]
                         ids = outputs['track_ids'][i].to(int)
                         # slot_ids = outputs['slot_ids'][i].to(int)
+
                         print(pred_means, pred_covs)
                         for j in range(len(pred_means)):
                             #rot = pred_rots[j]
                             #angle = torch.arctan(rot[0]/rot[1]) * 360
                             mean = pred_means[j]
+                            #TODO Modified here
+                            mean = mean + 250
                             color = self.colors[j % len(self.colors)]
-                            
+
+                            #NOTE WE ALSO HAVE TO SCALE COV
+
                             #rec, _ = gen_rectange(mean, angle, w=self.truck_w, h=self.truck_h, color=color)
                             #axes[key].add_patch(rec)
 
@@ -478,18 +505,18 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
                             if self.draw_cov:
                                 ellipse = gen_ellipse(mean, cov, edgecolor=color, fc='None', lw=2, linestyle='--')
                                 axes[key].add_patch(ellipse)
-                    
-                    
+
+
 
                 if mod in ['zed_camera_left', 'realsense_camera_img', 'realsense_camera_depth']:
                     # node_num = int(node[-1])
                     # A = outputs['attn_weights'][i]
-                    # A = A.permute(1,0,2) 
+                    # A = A.permute(1,0,2)
                     # nO, nH, L = A.shape
                     # A = A.reshape(nO, nH, 4, 35)
                     # head_dists = A.sum(dim=-1)[..., node_num-1]
                     # head_dists = F.interpolate(head_dists.unsqueeze(0).unsqueeze(0), scale_factor=60)[0][0]
-                    
+
                     # z = torch.zeros_like(head_dists)
                     # head_dists = torch.stack([head_dists,z,z], dim=-1)
 
@@ -524,7 +551,7 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
                     #axes[key].imshow(feat, cmap='turbo')
                     axes[key].imshow(feat)
 
-                 
+
                 if mod == 'zed_camera_depth':
                     axes[key].clear()
                     axes[key].axis('off')
@@ -565,6 +592,6 @@ class HDF5Dataset(Dataset, metaclass=ABCMeta):
                 # fname = f'{logdir}/frame_{frame_count}.png'
                 # cv2.imwrite(fname, data)
                 frame_count += 1
-                vid.write(data) 
+                vid.write(data)
 
         vid.release()

@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import lap 
+import lap
 from mmdet.models import build_detector, build_head, build_backbone, build_neck
 from collections import OrderedDict
 
@@ -38,7 +38,7 @@ class PoolingOutputHead(BaseModule):
                  num_sa_layers=0,
                  num_objects=1,
                  input_dim=256,
-                 mean_scale=[250,250],
+                 mean_scale=[700,500],
                  to_cm=False,
                  cov_add=1,
                  mlp_dropout_rate=0.0,
@@ -55,14 +55,33 @@ class PoolingOutputHead(BaseModule):
         self.pooler = nn.AdaptiveMaxPool2d((1, num_objects))
         self.big_lin = nn.Linear(70*50, num_objects)
 
-        
+
+        # self.num_outputs = 2 + 1
+        # if self.include_z:
+            # self.num_outputs += 1
+
+        # if predict_full_cov:
+            # if self.include_z:
+                # self.num_outputs += 9
+            # else:
+                # self.num_outputs += 3
+        # else:
+            # if self.include_z:
+                # self.num_outputs += 3
+            # else:
+                # self.num_outputs += 2
+
+        # if self.predict_rotation:
+            # self.num_outputs += 9
+
+
         if include_z:
             self.register_buffer('cov_add', torch.eye(3) * cov_add)
         else:
             self.register_buffer('cov_add', torch.eye(2) * cov_add)
 
         self.register_buffer('mean_scale', torch.tensor(mean_scale))
-         
+
         self.mlp = nn.Sequential(
             nn.Linear(input_dim, input_dim),
             #nn.Conv2d(input_dim, input_dim, kernel_size=7, padding=3, stride=2),
@@ -72,14 +91,14 @@ class PoolingOutputHead(BaseModule):
             nn.GELU(),
             nn.Dropout(mlp_dropout_rate)
         )
-        
+
 
         self.mean_head = nn.Linear(input_dim, 2)
         self.cov_head = nn.Linear(input_dim, 3)
         self.obj_prob_head = nn.Linear(input_dim, 1)
-        
+
         self.num_outputs = 2 + 3 + 1
-        
+
         if self.predict_rotation:
             self.rot_head = nn.Linear(input_dim, 2)
             self.num_outputs += 2
@@ -90,22 +109,22 @@ class PoolingOutputHead(BaseModule):
 
         output_sa_cfg=dict(type='QKVAttention',
              qk_dim=self.num_outputs,
-             num_heads=1, 
+             num_heads=1,
              in_proj=True,
              out_proj=True,
-             attn_drop=0.0, 
+             attn_drop=0.0,
              seq_drop=0.0,
              return_weights=False,
              v_dim=None
         )
-        
+
         if num_sa_layers > 0:
             self.output_sa = [ResSelfAttn(output_sa_cfg) for _ in range(num_sa_layers)]
             self.output_sa = nn.Sequential(*self.output_sa)
         else:
             self.output_sa = nn.Identity()
 
-    
+
     #def forward(self, data, return_loss=True, **kwargs):
     #x has the shape B x num_object x D
     def forward(self, x):
@@ -122,7 +141,7 @@ class PoolingOutputHead(BaseModule):
         outputs.append(self.obj_prob_head(x))
         if self.predict_rotation:
             outputs.append(self.rot_head(x))
-        
+
         if self.predict_velocity:
             outputs.append(self.vel_head(x))
 
@@ -141,7 +160,7 @@ class PoolingOutputHead(BaseModule):
             result['rot'] = rot
         # mean = self.mean_head(x)
         # cov_logits = self.cov_head(x)
-        
+
         # if self.include_z:
             # mean = output_vals[..., 0:3]
         # else:
@@ -149,9 +168,9 @@ class PoolingOutputHead(BaseModule):
         # if self.add_grid_to_mean:
             # mean[..., 0] += self.global_pos_encoding.unscaled_params_x.flatten()
             # mean[..., 1] += self.global_pos_encoding.unscaled_params_y.flatten()
-        mean = (mean.sigmoid() - 0.5 ) * 2
+        mean = mean.sigmoid()
         mean = mean * self.mean_scale
-        
+
         cov_diag = F.softplus(cov_logits[..., 0:2])
         cov_off_diag = cov_logits[..., -1]
         cov = torch.diag_embed(cov_diag)
@@ -188,7 +207,7 @@ class OutputHead(BaseModule):
                  predict_obj_prob=False,
                  num_sa_layers=0,
                  input_dim=256,
-                 mean_scale=[300,300],
+                 mean_scale=[250, 250],
                  to_cm=False,
                  cov_add=1,
                  mlp_dropout_rate=0.0,
@@ -204,14 +223,35 @@ class OutputHead(BaseModule):
         self.to_cm = to_cm
 
 
-        
+        # self.num_outputs = 2 + 1
+        # if self.include_z:
+            # self.num_outputs += 1
+
+        # if predict_full_cov:
+            # if self.include_z:
+                # self.num_outputs += 9
+            # else:
+                # self.num_outputs += 3
+        # else:
+            # if self.include_z:
+                # self.num_outputs += 3
+            # else:
+                # self.num_outputs += 2
+
+        # if self.predict_rotation:
+            # self.num_outputs += 9
+
+
         if include_z:
             self.register_buffer('cov_add', torch.eye(3) * cov_add)
+            # mean_scale = [400, 120, 500] # This will cause failure
+            # mean_scale = [750, 100, 850]
+            mean_scale = [700, 120, 800]
         else:
             self.register_buffer('cov_add', torch.eye(2) * cov_add)
 
         self.register_buffer('mean_scale', torch.tensor(mean_scale))
-         
+
         self.mlp = nn.Sequential(
             nn.Linear(input_dim, input_dim),
             nn.GELU(),
@@ -219,17 +259,21 @@ class OutputHead(BaseModule):
             nn.GELU(),
             nn.Dropout(mlp_dropout_rate)
         )
-        
 
-        self.num_outputs = 2 + 3 
-        self.mean_head = nn.Linear(input_dim, 2)
-        self.cov_head = nn.Linear(input_dim, 3)
+        if (self.include_z):
+            self.num_outputs = 3 + 6
+            self.mean_head = nn.Linear(input_dim, 3)
+            self.cov_head = nn.Linear(input_dim, 6)
+        else:
+            self.num_outputs = 2 + 3
+            self.mean_head = nn.Linear(input_dim, 2)
+            self.cov_head = nn.Linear(input_dim, 3)
 
         if self.predict_obj_prob:
             self.obj_prob_head = nn.Linear(input_dim, 1)
             self.num_outputs += 1
-        
-        
+
+
         if self.predict_rotation:
             self.rot_head = nn.Linear(input_dim, 2)
             self.num_outputs += 2
@@ -240,21 +284,21 @@ class OutputHead(BaseModule):
 
         output_sa_cfg=dict(type='QKVAttention',
              qk_dim=self.num_outputs,
-             num_heads=1, 
+             num_heads=1,
              in_proj=True,
              out_proj=True,
-             attn_drop=0.0, 
+             attn_drop=0.0,
              seq_drop=0.0,
              v_dim=None
         )
-        
+
         if num_sa_layers > 0:
             self.output_sa = [ResSelfAttn(output_sa_cfg) for _ in range(num_sa_layers)]
             self.output_sa = nn.Sequential(*self.output_sa)
         else:
             self.output_sa = nn.Identity()
 
-    
+
     #def forward(self, data, return_loss=True, **kwargs):
     #x has the shape B x num_object x D
     def forward(self, x):
@@ -263,20 +307,24 @@ class OutputHead(BaseModule):
         result = {}
         outputs.append(self.mean_head(x))
         outputs.append(self.cov_head(x))
-        
+
         if self.predict_obj_prob:
             outputs.append(self.obj_prob_head(x))
         if self.predict_rotation:
             outputs.append(self.rot_head(x))
-        
+
         if self.predict_velocity:
             outputs.append(self.vel_head(x))
 
         outputs = torch.cat(outputs, dim=-1)
         outputs = self.output_sa(outputs)
-        mean = outputs[..., 0:2]
-        cov_logits = outputs[..., 2:5]
-        
+        if self.include_z:
+            mean = outputs[..., 0:3]
+            cov_logits = outputs[..., 3:9]
+        else:
+            mean = outputs[..., 0:2]
+            cov_logits = outputs[..., 2:5]
+
         if self.predict_obj_prob:
             obj_logits = outputs[..., 5]
             result['obj_logits'] = obj_logits
@@ -290,7 +338,7 @@ class OutputHead(BaseModule):
             result['rot'] = rot
         # mean = self.mean_head(x)
         # cov_logits = self.cov_head(x)
-        
+
         # if self.include_z:
             # mean = output_vals[..., 0:3]
         # else:
@@ -298,17 +346,31 @@ class OutputHead(BaseModule):
         # if self.add_grid_to_mean:
             # mean[..., 0] += self.global_pos_encoding.unscaled_params_x.flatten()
             # mean[..., 1] += self.global_pos_encoding.unscaled_params_y.flatten()
-        mean = (mean.sigmoid() - 0.5 ) * 2
+        #import pdb; pdb.set_trace()
+        mean = (mean.sigmoid() - 0.5) * 2
         mean = mean * self.mean_scale
-        
-        cov_diag = F.softplus(cov_logits[..., 0:2])
-        cov_off_diag = cov_logits[..., -1]
-        cov = torch.diag_embed(cov_diag)
-        cov[..., -1, 0] += cov_off_diag
-        B, N, _, _ = cov.shape
-        cov = cov.reshape(B*N, 2, 2)
-        cov = torch.bmm(cov, cov.transpose(-2,-1))
-        cov = cov.reshape(B, N, 2, 2)
+
+        if (self.include_z):
+            cov_diag = F.softplus(cov_logits[..., 0:3])
+            cov_off_diag = cov_logits[..., 3:6]
+            cov = torch.diag_embed(cov_diag)
+            cov[..., 1, 0] = cov_off_diag[..., 0]
+            cov[..., 2, 0] = cov_off_diag[..., 1]
+            cov[..., 2, 1] = cov_off_diag[..., 2]
+            B, N, _, _ = cov.shape
+            cov = cov.reshape(B*N, 3, 3)
+            cov = torch.bmm(cov, cov.transpose(-2,-1))
+            cov = cov.reshape(B, N, 3, 3)
+
+        else:
+            cov_diag = F.softplus(cov_logits[..., 0:2])
+            cov_off_diag = cov_logits[..., -1]
+            cov = torch.diag_embed(cov_diag)
+            cov[..., -1, 0] += cov_off_diag
+            B, N, _, _ = cov.shape
+            cov = cov.reshape(B*N, 2, 2)
+            cov = torch.bmm(cov, cov.transpose(-2,-1))
+            cov = cov.reshape(B, N, 2, 2)
 
         cov = cov + self.cov_add
 
@@ -317,7 +379,7 @@ class OutputHead(BaseModule):
             # cov = cov*100
 
         result['dist'] = D.MultivariateNormal(mean, cov)
-        
+
         # if self.predict_rotation:
             # result['rot'] = self.rot_head(x).tanh()
 

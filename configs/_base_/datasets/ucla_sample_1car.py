@@ -12,6 +12,7 @@ img_pipeline = [
 ]
 
 
+
 r50_pipeline = [
     dict(type='LoadFromNumpyArray', force_float32=True),
     dict(type='RandomFlip', flip_ratio=0.0),
@@ -37,7 +38,7 @@ azimuth_pipeline = [
 
 range_pipeline = [
     dict(type='LoadFromNumpyArray', force_float32=True, transpose=True),
-    dict(type='Resize', img_scale=(256, 256), keep_ratio=False),
+    dict(type='Resize', img_scale=(256, 16), keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.0),
     dict(type='Normalize', mean=[4353], std=[705], to_rgb=False),
     dict(type='DefaultFormatBundle'),
@@ -63,9 +64,10 @@ pipelines = {
     'realsense_camera_depth': img_pipeline
 } 
 
-valid_mods=['mocap', 'zed_camera_left', 'zed_camera_depth', 'zed_camera_left_r50',
+valid_mods=['mocap', 'zed_camera_left', 'zed_camera_depth', 
+# 'zed_camera_left_r50',
             'range_doppler', 'azimuth_static', 'mic_waveform',
-            'realsense_camera_depth', 'realsense_camera_img', 'mmWave']
+            'realsense_camera_depth', 'realsense_camera_img']
 
 valid_nodes=[1,2,3]
 
@@ -74,21 +76,21 @@ trainset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         hdf5_fnames=[
             f'{data_root}/mocap.hdf5',
-            f'{data_root}/node_1/mmwave.hdf5',
-            f'{data_root}/node_2/mmwave.hdf5',
-            f'{data_root}/node_3/mmwave.hdf5',
+            # f'{data_root}/node_1/mmwave.hdf5',
+            # f'{data_root}/node_2/mmwave.hdf5',
+            # f'{data_root}/node_3/mmwave.hdf5',
             # f'{data_root}/node_4/mmwave.hdf5',
             f'{data_root}/node_1/realsense.hdf5',
             f'{data_root}/node_2/realsense.hdf5',
             f'{data_root}/node_3/realsense.hdf5',
             # f'{data_root}/node_4/realsense.hdf5',
-            f'{data_root}/node_1/respeaker.hdf5',
-            f'{data_root}/node_2/respeaker.hdf5',
-            f'{data_root}/node_3/respeaker.hdf5',
+            # f'{data_root}/node_1/respeaker.hdf5',
+            # f'{data_root}/node_2/respeaker.hdf5',
+            # f'{data_root}/node_3/respeaker.hdf5',
             # f'{data_root}/node_4/respeaker.hdf5',
-            f'{data_root}/node_1/zed.hdf5',
-            f'{data_root}/node_2/zed.hdf5',
-            f'{data_root}/node_3/zed.hdf5',
+            # f'{data_root}/node_1/zed.hdf5',
+            # f'{data_root}/node_2/zed.hdf5',
+            # f'{data_root}/node_3/zed.hdf5',
             # f'{data_root}/node_4/zed.hdf5',
             # f'{data_root}/node_1/zed_r50.hdf5',
             # f'{data_root}/node_2/zed_r50.hdf5',
@@ -98,6 +100,7 @@ trainset=dict(type='HDF5Dataset',
             # f'{data_root}/node_2/realsense_r50.hdf5',
             # f'{data_root}/node_3/realsense_r50.hdf5',
             # f'{data_root}/node_4/realsense_r50.hdf5',
+
 
         ],
         valid_mods=valid_mods,
@@ -112,22 +115,22 @@ data_root = '~/Desktop/mcp-sample-dataset/val'
 valset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         hdf5_fnames=[
-          f'{data_root}/mocap.hdf5',
-            f'{data_root}/node_1/mmwave.hdf5',
-            f'{data_root}/node_2/mmwave.hdf5',
-            f'{data_root}/node_3/mmwave.hdf5',
+            f'{data_root}/mocap.hdf5',
+            # f'{data_root}/node_1/mmwave.hdf5',
+            # f'{data_root}/node_2/mmwave.hdf5',
+            # f'{data_root}/node_3/mmwave.hdf5',
             # f'{data_root}/node_4/mmwave.hdf5',
             f'{data_root}/node_1/realsense.hdf5',
             f'{data_root}/node_2/realsense.hdf5',
             f'{data_root}/node_3/realsense.hdf5',
             # f'{data_root}/node_4/realsense.hdf5',
-            f'{data_root}/node_1/respeaker.hdf5',
-            f'{data_root}/node_2/respeaker.hdf5',
-            f'{data_root}/node_3/respeaker.hdf5',
+            # f'{data_root}/node_1/respeaker.hdf5',
+            # f'{data_root}/node_2/respeaker.hdf5',
+            # f'{data_root}/node_3/respeaker.hdf5',
             # f'{data_root}/node_4/respeaker.hdf5',
-            f'{data_root}/node_1/zed.hdf5',
-            f'{data_root}/node_2/zed.hdf5',
-            f'{data_root}/node_3/zed.hdf5',
+            # f'{data_root}/node_1/zed.hdf5',
+            # f'{data_root}/node_2/zed.hdf5',
+            # f'{data_root}/node_3/zed.hdf5',
             # f'{data_root}/node_4/zed.hdf5',
             # f'{data_root}/node_1/zed_r50.hdf5',
             # f'{data_root}/node_2/zed_r50.hdf5',
@@ -147,26 +150,26 @@ valset=dict(type='HDF5Dataset',
     pipelines=pipelines,
 )
 
-data_root = '~/Desktop/ssd4t/mcp-sample-dataset/test'
+data_root = '~/Desktop/mcp-sample-dataset/test'
 testset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         hdf5_fnames=[
-           f'{data_root}/mocap.hdf5',
-            f'{data_root}/node_1/mmwave.hdf5',
-            f'{data_root}/node_2/mmwave.hdf5',
-            f'{data_root}/node_3/mmwave.hdf5',
+            f'{data_root}/mocap.hdf5',
+            # f'{data_root}/node_1/mmwave.hdf5',
+            # f'{data_root}/node_2/mmwave.hdf5',
+            # f'{data_root}/node_3/mmwave.hdf5',
             # f'{data_root}/node_4/mmwave.hdf5',
             f'{data_root}/node_1/realsense.hdf5',
             f'{data_root}/node_2/realsense.hdf5',
             f'{data_root}/node_3/realsense.hdf5',
             # f'{data_root}/node_4/realsense.hdf5',
-            f'{data_root}/node_1/respeaker.hdf5',
-            f'{data_root}/node_2/respeaker.hdf5',
-            f'{data_root}/node_3/respeaker.hdf5',
+            # f'{data_root}/node_1/respeaker.hdf5',
+            # f'{data_root}/node_2/respeaker.hdf5',
+            # f'{data_root}/node_3/respeaker.hdf5',
             # f'{data_root}/node_4/respeaker.hdf5',
-            f'{data_root}/node_1/zed.hdf5',
-            f'{data_root}/node_2/zed.hdf5',
-            f'{data_root}/node_3/zed.hdf5',
+            # f'{data_root}/node_1/zed.hdf5',
+            # f'{data_root}/node_2/zed.hdf5',
+            # f'{data_root}/node_3/zed.hdf5',
             # f'{data_root}/node_4/zed.hdf5',
             # f'{data_root}/node_1/zed_r50.hdf5',
             # f'{data_root}/node_2/zed_r50.hdf5',
@@ -176,6 +179,7 @@ testset=dict(type='HDF5Dataset',
             # f'{data_root}/node_2/realsense_r50.hdf5',
             # f'{data_root}/node_3/realsense_r50.hdf5',
             # f'{data_root}/node_4/realsense_r50.hdf5',
+
         ],
         valid_mods=valid_mods,
         valid_nodes=valid_nodes,

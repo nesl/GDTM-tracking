@@ -148,13 +148,14 @@ def multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
     for i, data in enumerate(data_loader):
         with torch.no_grad():
             result = model(data, return_loss=False)
+            #import pdb; pdb.set_trace()
         for key in result:
             if 'mask' in key:
                 result[key] = encode_mask_results(result[key])
 
         for k, v in result.items():
             results[k].append(v)
-        
+
         if rank == 0:
             # batch_size = data['img'][0].size(0)
             batch_size = len(data[0][('mocap', 'mocap')]['gt_positions'])

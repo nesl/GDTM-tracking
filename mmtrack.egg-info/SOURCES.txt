@@ -29,7 +29,6 @@ mmtrack/.mim/configs/_base_/datasets/mot20.py
 mmtrack/.mim/configs/_base_/datasets/mot_challenge.py
 mmtrack/.mim/configs/_base_/datasets/mot_challenge_det.py
 mmtrack/.mim/configs/_base_/datasets/mot_challenge_reid.py
-mmtrack/.mim/configs/_base_/datasets/ucla_sample_1car.py
 mmtrack/.mim/configs/_base_/datasets/youtube_vis.py
 mmtrack/.mim/configs/_base_/datasets/mmm/2022-09-01/trucks0_lightsT_obstaclesF.py
 mmtrack/.mim/configs/_base_/datasets/mmm/2022-09-01/trucks1_lightsF_obstaclesF.py
@@ -91,10 +90,8 @@ mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_nodes1234_det_kf.py
 mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_nodes1234_detr.py
 mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_nodes1234_detr_kf.py
 mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_nodes1234_r50.py
-mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_nodes1234_r50_4090.py
 mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_nodes1234_r50_kf.py
 mmtrack/.mim/configs/mocap/trucks1_lightsT_obstaclesF_zed_nodes1234_yolo.py
-mmtrack/.mim/configs/mocap/ucla_sample_1car_zed_nodes123_r50.py
 mmtrack/.mim/configs/mocap/cfgs_2023_02_08/trucks1_lightsF_obstaclesF_range_nodes1234.py
 mmtrack/.mim/configs/mocap/cfgs_2023_02_08/trucks1_lightsF_obstaclesF_zed_nodes1234.py
 mmtrack/.mim/configs/mocap/cfgs_2023_02_08/trucks1_lightsF_obstaclesT_range_nodes1234.py
@@ -286,12 +283,9 @@ mmtrack/.mim/tools/test.py
 mmtrack/.mim/tools/test_from_config.sh
 mmtrack/.mim/tools/test_from_config_grid.sh
 mmtrack/.mim/tools/test_from_config_nll.sh
-mmtrack/.mim/tools/test_from_config_nll_local.sh
 mmtrack/.mim/tools/train.py
 mmtrack/.mim/tools/train_from_config.sh
-mmtrack/.mim/tools/train_from_config_local.sh
 mmtrack/.mim/tools/val_from_config.sh
-mmtrack/.mim/tools/val_from_config_local.sh
 mmtrack/.mim/tools/analysis/analyze_logs.py
 mmtrack/.mim/tools/analysis/benchmark.py
 mmtrack/.mim/tools/analysis/print_config.py
@@ -481,4 +475,3 @@ requirements/mminstall.txt
 requirements/readthedocs.txt
 requirements/runtime.txt
 requirements/tests.txt
-tests/test_version.py
