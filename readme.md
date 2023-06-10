@@ -1,4 +1,5 @@
 
+
 # GDTM-Tracking
 
 **GDTM** is a new multi-hour dataset collected with a network of multimodal sensors for the indoor geospatial tracking problem. It features time-synchronized steoreo-vision camera, LiDAR camera, mmWave radar, and microphone arrays, as well as ground truth data containing the position and orientations of the sensing target (remote controlled cars on a indoor race track) and the sensor nodes. For details of the dataset please refer to [GitHub](https://github.com/nesl/GDTM) and PDF (Still under review).
@@ -27,12 +28,14 @@ Additional, this repository contains our efforts towards building a model resili
 - multi-cam: late fusion 3D, camera only, multiple viewpoints (limited tracking performance)
 - multi-camdepth: late fusion 3D, camera + LiDAR camera depth, multiple viewpoints
 
-As step one, please clone the desired branch using
+As step one, please clone the desired branch using terminal
 ```
+cd ~/Desktop
 git clone https://github.com/nesl/GDTM-tracking.git
 ```
 or
 ```
+cd ~/Desktop
 git clone --branch <branchname> https://github.com/nesl/GDTM-tracking.git
 ```
 
@@ -83,25 +86,27 @@ Please unzip the data, rename it to **"mcp-sample-dataset/"** and put it on the 
 The final data structure should be like following:
 ```
 └── Desktop/mcp-sample-dataset/
-    └── mcp-sample-dataset/
-        ├── train/
-        │   ├── mmwave.hdf5
-        │   ├── realsense.hdf5
-        │   ├── respeaker.hdf5
-        │   └── zed.hdf5
-        ├── val/
-        │   ├── mmwave.hdf5
-        │   ├── realsense.hdf5
-        │   ├── respeaker.hdf5
-        │   └── zed.hdf5
-        ├── test/
-        │   ├── mmwave.hdf5
-        │   ├── realsense.hdf5
-        │   ├── respeaker.hdf5
-        │   └── zed.hdf5
-        └── mocap.hdf5
+	├── test/
+	│   ├── node1/       
+	│   │   ├── mmwave.hdf5
+	│   │   ├── realsense.hdf5
+	│   │   ├── respeaker.hdf5
+	│   │   └── zed.hdf5
+	│   ├── node2/
+	│   │   └── same as node 1
+	│   ├── node3/
+	│   │   └── same as node 1  
+	│   └── mocap.hdf5
+	├── train/
+	│   └── same sa test
+	└── val/
+	    └── same as test
 ```
 Note that you only need test/ if you are running test from checkpoints only.
+#### Specify Filepath
+Open mmmtracking/configs/\_base\_/datasets/ucla_1car_early_fusion.py
+In Line 75, Line 114, and Line 153, change the data_root to absolute path:
+e.g. ~/Desktop/... -> /home/USER_NAME/Desktop/...
 
 ## Code Usage
 ### Make Inference Using A Checkpoint (Testing)
@@ -110,27 +115,34 @@ Please download the pretrained checkpoints [Here](https://drive.google.com/drive
 Note that for single-view case (Baseline 1 in the paper), please make sure to use the checkpoints corresponding to the code and data of your choice. 
 
 For example, if we use view 3 data (signle view, good lighting condition) and master branch code (single view, early fusion, all modalities), we should download
-["Checkpoints/Single-view/Early Fusion/All Modalities/log_same_goodlight_view3.zip"](https://drive.google.com/file/d/1Au6ZvV4cOqR_xSg02n35tn2gceCQ6mjy/view?usp=sharing)
+["Checkpoints/Single-view/Early Fusion/All Modalities/logs_sae_goodlight_view3.zip"](https://drive.google.com/file/d/1oPoZO_8p5DqpiNWF9FqtBGxbW7f3rrNw/view?usp=sharing)
 
-After downloading the checkpoint, please rename it to **log/** and put it under "mmtracking" folder using this hierachy. 
+After downloading the checkpoint, please rename it to **logs/** and put it under "mmtracking" folder using this hierachy. 
 
 ```
 └── Desktop/mmtracking/
-	└── ...
-    └── log/
+    └── logs/
         ├── val
         ├── epoch_xx.pth
         └── latest.pth
 ```
 where the "latest.pth" above is created by
 ```
-ln -s epoch_40.pth lastest.pth
+ln -s epoch_40.pth latest.pth
 ```
 
 Then, you could run the evaluations by running (still in terminal under ~/Desktop/mmtracking)
 ```
 bash ./tools/test_from_config_nll_local.sh ./configs/mocap/early_fusion_zed_mmwave_audio_ucla.py 1
 ```
+---
+**Warning**: This script will cache the dataset in system memory (/dev/shm)
+If the dataset loading operation was not successful, or you have changed the dataset in "~/Desktop/mcp-sample-dataset", please make sure to run this line **before** the "test_from_config_nll_local.sh" above:
+```
+rm -r /dev/shm/cache_*
+```
+---
+
 
 The visualization results will apprear in 
 ```
@@ -167,10 +179,14 @@ Here we list a few files to change in case some error happens during your config
 This is where the filepath are stored
 mmtracking/configs/\_base\_/datasets/ucla_1car_early_fusion.py
 
+Don't forget to do "rm -r /dev/shm/cache_*" after you fix this error. Otherwise a "List out of range" error will pop up.
+
 #### GPU OOM Error, Number of Epoches, Inteval of checkpoints
 mmtracking/configs/mocap/early_fusion_zed_mmwave_audio_ucla.py
 Reduce "samples_per_gpu" in Line 127 helps with OOM error.
 Line 169-187 changes the training configurations.
+
+This configuration also defines (1) the valid modalities (2) backbone, adapter, and output head architecture hyperparameters
 
 #### Something wrong with dataset caching
 mmtracking/mmtrack/datasets/mocap/cacher.py
