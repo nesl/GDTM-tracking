@@ -64,7 +64,7 @@ pipelines = {
     'mic_waveform': audio_pipeline,
     'realsense_camera_img': img_pipeline,
     'realsense_camera_depth': img_pipeline
-} 
+}
 
 valid_mods=['mocap', 'zed_camera_left', 'zed_camera_depth', 'zed_camera_left_r50',
             'range_doppler', 'azimuth_static', 'mic_waveform',
@@ -115,7 +115,7 @@ data_root = '~/Desktop/mcp-sample-dataset/val'
 valset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         hdf5_fnames=[
-            f'{data_root}/mocap.hdf5',
+          f'{data_root}/mocap.hdf5',
             f'{data_root}/node_1/mmwave.hdf5',
             f'{data_root}/node_2/mmwave.hdf5',
             f'{data_root}/node_3/mmwave.hdf5',
@@ -154,7 +154,7 @@ data_root = '~/Desktop/mcp-sample-dataset/test'
 testset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         hdf5_fnames=[
-            f'{data_root}/mocap.hdf5',
+           f'{data_root}/mocap.hdf5',
             f'{data_root}/node_1/mmwave.hdf5',
             f'{data_root}/node_2/mmwave.hdf5',
             f'{data_root}/node_3/mmwave.hdf5',
@@ -179,7 +179,6 @@ testset=dict(type='HDF5Dataset',
             # f'{data_root}/node_2/realsense_r50.hdf5',
             # f'{data_root}/node_3/realsense_r50.hdf5',
             # f'{data_root}/node_4/realsense_r50.hdf5',
-
         ],
         valid_mods=valid_mods,
         valid_nodes=valid_nodes,

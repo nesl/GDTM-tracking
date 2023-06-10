@@ -38,7 +38,7 @@ class PoolingOutputHead(BaseModule):
                  num_sa_layers=0,
                  num_objects=1,
                  input_dim=256,
-                 mean_scale=[700,500],
+                 mean_scale=[250,250],
                  to_cm=False,
                  cov_add=1,
                  mlp_dropout_rate=0.0,
@@ -54,25 +54,6 @@ class PoolingOutputHead(BaseModule):
         #self.pooler = nn.AdaptiveAvgPool2d((1, num_objects))
         self.pooler = nn.AdaptiveMaxPool2d((1, num_objects))
         self.big_lin = nn.Linear(70*50, num_objects)
-
-
-        # self.num_outputs = 2 + 1
-        # if self.include_z:
-            # self.num_outputs += 1
-        
-        # if predict_full_cov:
-            # if self.include_z:
-                # self.num_outputs += 9
-            # else:
-                # self.num_outputs += 3
-        # else:
-            # if self.include_z:
-                # self.num_outputs += 3
-            # else:
-                # self.num_outputs += 2
-
-        # if self.predict_rotation:
-            # self.num_outputs += 9
 
         
         if include_z:
@@ -168,7 +149,7 @@ class PoolingOutputHead(BaseModule):
         # if self.add_grid_to_mean:
             # mean[..., 0] += self.global_pos_encoding.unscaled_params_x.flatten()
             # mean[..., 1] += self.global_pos_encoding.unscaled_params_y.flatten()
-        mean = mean.sigmoid()
+        mean = (mean.sigmoid() - 0.5 ) * 2
         mean = mean * self.mean_scale
         
         cov_diag = F.softplus(cov_logits[..., 0:2])
@@ -207,7 +188,7 @@ class OutputHead(BaseModule):
                  predict_obj_prob=False,
                  num_sa_layers=0,
                  input_dim=256,
-                 mean_scale=[300, 300],
+                 mean_scale=[300,300],
                  to_cm=False,
                  cov_add=1,
                  mlp_dropout_rate=0.0,
@@ -221,30 +202,11 @@ class OutputHead(BaseModule):
         self.predict_full_cov = predict_full_cov
         self.predict_obj_prob = predict_obj_prob
         self.to_cm = to_cm
-        
 
-        # self.num_outputs = 2 + 1
-        # if self.include_z:
-            # self.num_outputs += 1
-        
-        # if predict_full_cov:
-            # if self.include_z:
-                # self.num_outputs += 9
-            # else:
-                # self.num_outputs += 3
-        # else:
-            # if self.include_z:
-                # self.num_outputs += 3
-            # else:
-                # self.num_outputs += 2
-
-        # if self.predict_rotation:
-            # self.num_outputs += 9
 
         
         if include_z:
             self.register_buffer('cov_add', torch.eye(3) * cov_add)
-            mean_scale = [750, 100, 850] #TODO Verify mean scale 
         else:
             self.register_buffer('cov_add', torch.eye(2) * cov_add)
 
@@ -258,14 +220,10 @@ class OutputHead(BaseModule):
             nn.Dropout(mlp_dropout_rate)
         )
         
-        if (self.include_z):
-            self.num_outputs = 3 + 6
-            self.mean_head = nn.Linear(input_dim, 3)
-            self.cov_head = nn.Linear(input_dim, 6)
-        else:
-            self.num_outputs = 2 + 3 
-            self.mean_head = nn.Linear(input_dim, 2)
-            self.cov_head = nn.Linear(input_dim, 3)
+
+        self.num_outputs = 2 + 3 
+        self.mean_head = nn.Linear(input_dim, 2)
+        self.cov_head = nn.Linear(input_dim, 3)
 
         if self.predict_obj_prob:
             self.obj_prob_head = nn.Linear(input_dim, 1)
@@ -316,12 +274,8 @@ class OutputHead(BaseModule):
 
         outputs = torch.cat(outputs, dim=-1)
         outputs = self.output_sa(outputs)
-        if self.include_z:
-            mean = outputs[..., 0:3]
-            cov_logits = outputs[..., 3:9]
-        else:
-            mean = outputs[..., 0:2]
-            cov_logits = outputs[..., 2:5]
+        mean = outputs[..., 0:2]
+        cov_logits = outputs[..., 2:5]
         
         if self.predict_obj_prob:
             obj_logits = outputs[..., 5]
@@ -344,31 +298,17 @@ class OutputHead(BaseModule):
         # if self.add_grid_to_mean:
             # mean[..., 0] += self.global_pos_encoding.unscaled_params_x.flatten()
             # mean[..., 1] += self.global_pos_encoding.unscaled_params_y.flatten()
-        #import pdb; pdb.set_trace()
-        mean = (mean.sigmoid() - 0.5) * 2
+        mean = (mean.sigmoid() - 0.5 ) * 2
         mean = mean * self.mean_scale
-    
-        if (self.include_z):
-            cov_diag = F.softplus(cov_logits[..., 0:3])
-            cov_off_diag = cov_logits[..., 3:6]
-            cov = torch.diag_embed(cov_diag)
-            cov[..., 1, 0] = cov_off_diag[..., 0]
-            cov[..., 2, 0] = cov_off_diag[..., 1]
-            cov[..., 2, 1] = cov_off_diag[..., 2]
-            B, N, _, _ = cov.shape
-            cov = cov.reshape(B*N, 3, 3)
-            cov = torch.bmm(cov, cov.transpose(-2,-1))
-            cov = cov.reshape(B, N, 3, 3)
- 
-        else:
-            cov_diag = F.softplus(cov_logits[..., 0:2])
-            cov_off_diag = cov_logits[..., -1]
-            cov = torch.diag_embed(cov_diag)    
-            cov[..., -1, 0] += cov_off_diag
-            B, N, _, _ = cov.shape
-            cov = cov.reshape(B*N, 2, 2)
-            cov = torch.bmm(cov, cov.transpose(-2,-1))
-            cov = cov.reshape(B, N, 2, 2)
+        
+        cov_diag = F.softplus(cov_logits[..., 0:2])
+        cov_off_diag = cov_logits[..., -1]
+        cov = torch.diag_embed(cov_diag)
+        cov[..., -1, 0] += cov_off_diag
+        B, N, _, _ = cov.shape
+        cov = cov.reshape(B*N, 2, 2)
+        cov = torch.bmm(cov, cov.transpose(-2,-1))
+        cov = cov.reshape(B, N, 2, 2)
 
         cov = cov + self.cov_add
 

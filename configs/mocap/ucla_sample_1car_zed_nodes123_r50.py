@@ -1,16 +1,20 @@
 _base_ = [
-    '../_base_/datasets/mmm/2022-09-01/trucks1_lightsT_obstaclesF.py'
+    '../_base_/datasets/ucla_sample_1car.py'
 ]
 
-valid_mods=['mocap', 'zed_camera_left','range_doppler', 'mic_waveform']
+valid_mods=['mocap', 'zed_camera_left', 'realsense_camera_depth', "range_doppler", "mic_waveform"]
+
 
 trainset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         cache_dir='/dev/shm/cache_train/',
         num_future_frames=0,
         num_past_frames=9,
-        valid_nodes=[1,2,3,4],
+        valid_nodes=[1,2,3],
         valid_mods=valid_mods,
+        min_x=-1.5, max_x=2.5,
+        min_y=0, max_y=1,
+        min_z=-1.5, max_z=2.5,
         include_z=False,
     ),
     num_future_frames=0,
@@ -20,8 +24,11 @@ trainset=dict(type='HDF5Dataset',
 valset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         cache_dir='/dev/shm/cache_val/',
-        valid_nodes=[1,2,3,4],
+        valid_nodes=[1,2,3],
         valid_mods=valid_mods,
+        min_x=-1.5, max_x=2.5,
+        min_y=0, max_y=1,
+        min_z=-1.5, max_z=2.5,
         include_z=False,
     ),
     num_future_frames=0,
@@ -33,7 +40,10 @@ valset=dict(type='HDF5Dataset',
 testset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         cache_dir='/dev/shm/cache_test/',
-        valid_nodes=[1,2,3,4],
+        min_x=-1.5, max_x=2.5,
+        min_y=0, max_y=1,
+        min_z=-1.5, max_z=2.5,
+        valid_nodes=[1,2,3],
         valid_mods=valid_mods,
         include_z=False,
     ),
@@ -43,7 +53,28 @@ testset=dict(type='HDF5Dataset',
     draw_cov=True,
 )
 
-r50_cfg=[
+zr50_cfg=[
+    dict(type='ResNet',
+        depth=50,
+        num_stages=4,
+        out_indices=(3, ),
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=False),
+        norm_eval=True,
+        style='pytorch',
+        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50'),
+    ),
+    dict(type='ChannelMapper',
+        in_channels=[2048],
+        kernel_size=1,
+        out_channels=256,
+        act_cfg=None,
+        norm_cfg=dict(type='GN', num_groups=32),
+        num_outs=1
+    )
+]
+
+depth_r50_cfg=[
     dict(type='ResNet',
         depth=50,
         num_stages=4,
@@ -65,17 +96,28 @@ r50_cfg=[
 ]
 
 backbone_cfgs = {
-    'zed_camera_left': r50_cfg, 
+    'zed_camera_left': zr50_cfg,
+    "realsense_camera_depth": depth_r50_cfg,
     'range_doppler': dict(type='mmWaveBackbone'),
     'mic_waveform': dict(type='AudioBackbone'),
 }
 
-
-zed_cfg=dict(type='LinearEncoder', in_len=135, out_len=135, use_pos_encodings=True, ffn_cfg=dict(type='SLP', in_channels=512))
-rdoppler_cfg=dict(type='LinearEncoder', in_len=16, out_len=16, use_pos_encodings=True, ffn_cfg=dict(type='SLP', in_channels=512))
-audio_cfg=dict(type='LinearEncoder', in_len=16, out_len=16, use_pos_encodings=True, ffn_cfg=dict(type='SLP', in_channels=512))
+zed_cfg = dict(type='LinearEncoder', in_len=135, out_len=1,
+        ffn_cfg=dict(type='SLP', in_channels=256))
+depth_cfg = dict(type='LinearEncoder', in_len=108, out_len=1,
+        ffn_cfg=dict(type='SLP', in_channels=256))
+rdoppler_cfg = dict(type='LinearEncoder', in_len=16, out_len=1,
+        ffn_cfg=dict(type='SLP', in_channels=256))
+audio_cfg = dict(type='LinearEncoder', in_len=16, out_len=1,
+        ffn_cfg=dict(type='SLP', in_channels=256))
+# #mmWave length is 256
+# model_cfg_depth = dict(type='LinearEncoder', in_len=108, out_len=1,
+#         ffn_cfg=dict(type='SLP', in_channels=256))
 
 adapter_cfgs = {
+    ('realsense_camera_depth', 'node_1'): depth_cfg,
+    ('realsense_camera_depth', 'node_2'): depth_cfg,
+    ('realsense_camera_depth', 'node_3'): depth_cfg,
     ('zed_camera_left', 'node_1'): zed_cfg,
     ('zed_camera_left', 'node_2'): zed_cfg,
     ('zed_camera_left', 'node_3'): zed_cfg,
@@ -91,13 +133,12 @@ adapter_cfgs = {
 
 }
 
-
-model = dict(type='EarlyFusion',
+model = dict(type='KFDETR',
         output_head_cfg=dict(type='OutputHead',
          include_z=False,
          predict_full_cov=True,
          cov_add=1.0,
-         input_dim=512,
+         input_dim=256,
          predict_rotation=True,
          predict_velocity=False,
          num_sa_layers=0,
@@ -110,18 +151,16 @@ model = dict(type='EarlyFusion',
     pos_loss_weight=1,
     num_queries=1,
     mod_dropout_rate=0.0,
-    loss_type='nll',
-    global_ca_layers=6
-
+    loss_type='nll'
 )
 
 
 # orig_bs = 2
-# orig_lr = 1e-4 
+# orig_lr = 1e-4
 # factor = 4
 data = dict(
     samples_per_gpu=4,
-    workers_per_gpu=0,
+    workers_per_gpu=1,
     shuffle=True, #trainset shuffle only
     train=trainset,
     val=valset,
@@ -142,13 +181,13 @@ optimizer = dict(
 )
 
 optimizer_config = dict(grad_clip=dict(max_norm=0.1, norm_type=2))
-total_epochs = 50
+total_epochs = 40
 lr_config = dict(policy='step', step=[40])
 evaluation = dict(metric=['bbox', 'track'], interval=1e8)
 
 find_unused_parameters = True
 
-checkpoint_config = dict(interval=total_epochs)
+checkpoint_config = dict(interval=10)
 log_config = dict(
     interval=1,
     hooks=[

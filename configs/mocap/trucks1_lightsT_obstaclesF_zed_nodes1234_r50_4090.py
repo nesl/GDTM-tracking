@@ -65,8 +65,8 @@ backbone_cfg=[
 
 
 
-model_cfg=dict(type='LinearEncoder', in_len=135, out_len=135, use_pos_encodings=True,
-        ffn_cfg=dict(type='SLP', in_channels=512))
+model_cfg=dict(type='LinearEncoder', in_len=135, out_len=1,
+        ffn_cfg=dict(type='SLP', in_channels=256))
 
 model_cfgs = {('zed_camera_left', 'node_1'): model_cfg,
               ('zed_camera_left', 'node_2'): model_cfg,
@@ -75,12 +75,12 @@ model_cfgs = {('zed_camera_left', 'node_1'): model_cfg,
 
 backbone_cfgs = {'zed_camera_left': backbone_cfg}
 
-model = dict(type='EarlyFusion',
+model = dict(type='KFDETR',
         output_head_cfg=dict(type='OutputHead',
          include_z=False,
          predict_full_cov=True,
          cov_add=1.0,
-         input_dim=512,
+         input_dim=256,
          predict_rotation=True,
          predict_velocity=False,
          num_sa_layers=0,
@@ -101,8 +101,8 @@ model = dict(type='EarlyFusion',
 # orig_lr = 1e-4 
 # factor = 4
 data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=2,
+    samples_per_gpu=8,
+    workers_per_gpu=4,
     shuffle=True, #trainset shuffle only
     train=trainset,
     val=valset,

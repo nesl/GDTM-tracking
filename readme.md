@@ -74,7 +74,7 @@ pip install  -v  -e  .
 #### Sample dataset
 Please visit the [data repository](https://drive.google.com/drive/folders/1oj75d7x11Y51g2lkLlLWog-bJZGKDPgG?usp=sharing) for a sample data to test this repository.
 
-Note that the configuration of the data need to be the same as the branch of your choice. For example, the master branch code is configured as (single view, early fusion, all modalities). If you would like to test this code in good lighting condition data, you should go to
+Note that the configuration of the data need to be the same as the branch of your choice. For example, the late-all branch code is configured as (single view, late fusion, all modalities). If you would like to test this code in good lighting condition data, you should go to
 ["SampleData/SingleView/Good Lighting Conditions/dataset_singleview3.zip"](https://drive.google.com/file/d/1c72LTUa9Uz90r_2iO9LBxz9bHoS-V-fi/view?usp=sharing)
 
 #### Full dataset
@@ -104,7 +104,7 @@ The final data structure should be like following:
 ```
 Note that you only need test/ if you are running test from checkpoints only.
 #### Specify Filepath
-Open mmtracking/configs/\_base\_/datasets/ucla_1car_early_fusion.py
+Open mmmtracking/configs/\_base\_/datasets/ucla_sample_1car.py
 In Line 75, Line 114, and Line 153, change the data_root to absolute path:
 e.g. ~/Desktop/... -> /home/USER_NAME/Desktop/...
 
@@ -114,27 +114,26 @@ Please download the pretrained checkpoints [Here](https://drive.google.com/drive
 
 Note that for single-view case (Baseline 1 in the paper), please make sure to use the checkpoints corresponding to the code and data of your choice. 
 
-For example, if we use view 3 data (signle view, good lighting condition) and master branch code (single view, early fusion, all modalities), we should download
-["Checkpoints/Single-view/Early Fusion/All Modalities/logs_sae_goodlight_view3.zip"](https://drive.google.com/file/d/1oPoZO_8p5DqpiNWF9FqtBGxbW7f3rrNw/view?usp=sharing)
+For example, if we use view 3 data (single view, good lighting condition) and late-all branch code (single view, late fusion, all modalities), we should download
+["Checkpoints/Single-view/Late Fusion/All Modalities/logs_sal_goodlight_view3.zip"](https://drive.google.com/file/d/16JjY2d2J0JnWJNI1Mpy7om7m1MKzF8Qj/view?usp=sharing)
 
 After downloading the checkpoint, please rename it to **logs/** and put it under "mmtracking" folder using this hierachy. 
 
 ```
 └── Desktop/mmtracking/
     └── logs/
-        └── early_fusion_zed_mmwave_audio_ucla/
-            ├── val
-            ├── epoch_xx.pth
-            └── latest.pth (to be created)
+        ├── val
+        ├── epoch_xx.pth
+        └── latest.pth
 ```
-where the "latest.pth" above is created by (in a terminal in early\_fusion\_zed\_mmwave\_audio\_ucla/):
+where the "latest.pth" above is created by
 ```
 ln -s epoch_40.pth latest.pth
 ```
 
-Then, you could run the evaluations by running (still in terminal under ~/Desktop/mmtracking, make sure you have used "conda activate iobt")
+Then, you could run the evaluations by running (still in terminal under ~/Desktop/mmtracking)
 ```
-bash ./tools/test_from_config_nll_local.sh ./configs/mocap/early_fusion_zed_mmwave_audio_ucla.py 1
+bash ./tools/test_from_config_nll_local.sh ./configs/mocap/ucla_sample_1car_zed_nodes123_r50.py 1
 ```
 ---
 **Warning**: This script will cache the dataset in system memory (/dev/shm)
@@ -147,11 +146,11 @@ rm -r /dev/shm/cache_*
 
 The visualization results will apprear in 
 ```
-mmtracking/logs/early_fusion_early_fusion_zed_mmwave_audio_ucla/test_nll/latest_vid.mp4
+mmtracking/logs/ucla_sample_1car_zed_nodes123_r50/test_nll/latest_vid.mp4
 ```
 and numerical results appears at the last two lines of 
 ```
-mmtracking/logs/early_fusion_early_fusion_zed_mmwave_audio_ucla/test_nll/mean.txt
+mmtracking/logs/ucla_sample_1car_zed_nodes123_r50/test_nll/mean.txt
 ```
 
 If you would like to train a model from scratch instead , please refer to the “training” and “scaling” sections down below.
@@ -159,7 +158,7 @@ If you would like to train a model from scratch instead , please refer to the �
 ### Training
 Set up the data as instructed by previous sections, and run
 ```
-bash ./tools/train_from_config_local.sh ./configs/mocap/early_fusion_zed_mmwave_audio_ucla.py 1
+bash ./tools/train_from_config_local.sh ./configs/mocap/ucla_sample_1car_zed_nodes123_r50.py 1
 ```
 where the last digit indicate the number of GPU you have for training.
 
@@ -168,7 +167,7 @@ After training, some additional data is required to perform a post-hoc model rec
 
 Instructions for scaling:
 ```
-bash ./tools/val_from_config_local.sh ./configs/mocap/early_fusion_zed_mmwave_audio_ucla.py 1
+bash ./tools/val_from_config_local.sh ./configs/mocap/ucla_sample_1car_zed_nodes123_r50.py 1
 ```
 The last digit must be "1". Scaling with multiple GPU will cause an error.
 
@@ -178,14 +177,14 @@ The last digit must be "1". Scaling with multiple GPU will cause an error.
 Here we list a few files to change in case some error happens during your configurations.
 #### Data not found error
 This is where the filepath are stored
-mmtracking/configs/\_base\_/datasets/ucla_1car_early_fusion.py
+mmtracking/configs/\_base\_/datasets/ucla_sample_1car.py
 
 Don't forget to do "rm -r /dev/shm/cache_*" after you fix this error. Otherwise a "List out of range" error will pop up.
 
 #### GPU OOM Error, Number of Epoches, Inteval of checkpoints
-mmtracking/configs/mocap/early_fusion_zed_mmwave_audio_ucla.py
-Reduce "samples_per_gpu" in Line 127 helps with OOM error.
-Line 169-187 changes the training configurations.
+mmtracking/configs/mocap/ucla_sample_1car_zed_nodes123_r50.py
+Reduce "samples_per_gpu" near Line 161 helps with OOM error.
+Line 170+ changes the training configurations.
 
 This configuration also defines (1) the valid modalities (2) backbone, adapter, and output head architecture hyperparameters
 
@@ -193,7 +192,7 @@ This configuration also defines (1) the valid modalities (2) backbone, adapter, 
 mmtracking/mmtrack/datasets/mocap/cacher.py
 
 #### Something wrong with model training/inferences
-mmtracking/mmtrack/models/mocap/early_fusion.py
+mmtracking/mmtrack/models/mocap/kfdetr.py
 Function forward_train() for training
 Fuction forward_track() for testing
 
