@@ -17,33 +17,18 @@ class DecodeJPEG(object):
         img = cv2.imdecode(code, 1)
         return img
 
-
 @PIPELINES.register_module()
 class LoadAudio(object):
-    def __init__(self, n_fft=400):
-        self.spectro = torchaudio.transforms.Spectrogram(n_fft=n_fft)
+    def __init__(self):
+        self.spectro = torchaudio.transforms.Spectrogram()
 
     def __call__(self, array):
-        array = array[:, 1:5]
         array = torch.from_numpy(array)
         array = array.unsqueeze(0)
-        array = array.permute(0, 2, 1)
         sgram = self.spectro(array)
-        sgram = sgram.permute(0, 2, 3, 1).squeeze()
-        sgram = sgram.numpy()
-        results = {
-            'img': sgram,
-            'img_shape': sgram.shape,
-            'ori_shape': sgram.shape,
-            'img_fields': ['img'],
-            'filename': 'placeholder.jpg',
-            'ori_filename': 'placeholder.jpg'
-        }
-        return results
-
-        # sgram = sgram.squeeze()
-        # sgram = sgram.permute(1, 2, 0)
-        # return sgram.numpy()
+        sgram = sgram.squeeze()
+        sgram = sgram.permute(1, 2, 0)
+        return sgram.numpy()
 
 @PIPELINES.register_module()
 class LoadFromNumpyArray(object):
@@ -63,9 +48,9 @@ class LoadFromNumpyArray(object):
             array = np.concatenate([array, array, array], axis=-1)
         array = np.nan_to_num(array, nan=0.0)
         results = {
-            'img': array,
+            'img': array, 
             'img_shape': array.shape,
-            'ori_shape': array.shape,
+            'ori_shape': array.shape, 
             'img_fields': ['img'],
             'filename': 'placeholder.jpg',
             'ori_filename': 'placeholder.jpg'

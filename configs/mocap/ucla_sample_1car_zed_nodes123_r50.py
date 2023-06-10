@@ -2,7 +2,7 @@ _base_ = [
     '../_base_/datasets/ucla_sample_1car.py'
 ]
 
-valid_mods=['mocap', 'zed_camera_left', 'realsense_camera_depth', "range_doppler", "mic_waveform"]
+valid_mods=['mocap', 'zed_camera_left']
 
 
 trainset=dict(type='HDF5Dataset',
@@ -53,7 +53,7 @@ testset=dict(type='HDF5Dataset',
     draw_cov=True,
 )
 
-zr50_cfg=[
+zed_backbone_cfg=[
     dict(type='ResNet',
         depth=50,
         num_stages=4,
@@ -74,64 +74,44 @@ zr50_cfg=[
     )
 ]
 
-depth_r50_cfg=[
-    dict(type='ResNet',
-        depth=50,
-        num_stages=4,
-        out_indices=(3, ),
-        frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=False),
-        norm_eval=True,
-        style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50'),
-    ),
-    dict(type='ChannelMapper',
-        in_channels=[2048],
-        kernel_size=1,
-        out_channels=256,
-        act_cfg=None,
-        norm_cfg=dict(type='GN', num_groups=32),
-        num_outs=1
-    )
-]
+# doppler_backbone_cfg=[
+#     dict(type='ResNet',
+#         depth=50,
+#         num_stages=4,
+#         out_indices=(3, ),
+#         frozen_stages=1,
+#         norm_cfg=dict(type='BN', requires_grad=False),
+#         norm_eval=True,
+#         style='pytorch',
+#         init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50'),
+#     ),
+#     dict(type='ChannelMapper',
+#         in_channels=[2048],
+#         kernel_size=1,
+#         out_channels=256,
+#         act_cfg=None,
+#         norm_cfg=dict(type='GN', num_groups=32),
+#         num_outs=1
+#     )
+# ]
 
-backbone_cfgs = {
-    'zed_camera_left': zr50_cfg,
-    "realsense_camera_depth": depth_r50_cfg,
-    'range_doppler': dict(type='mmWaveBackbone'),
-    'mic_waveform': dict(type='AudioBackbone'),
-}
 
-zed_cfg = dict(type='LinearEncoder', in_len=135, out_len=1,
+model_cfg_img = dict(type='LinearEncoder', in_len=135, out_len=1,
         ffn_cfg=dict(type='SLP', in_channels=256))
-depth_cfg = dict(type='LinearEncoder', in_len=108, out_len=1,
-        ffn_cfg=dict(type='SLP', in_channels=256))
-rdoppler_cfg = dict(type='LinearEncoder', in_len=16, out_len=1,
-        ffn_cfg=dict(type='SLP', in_channels=256))
-audio_cfg = dict(type='LinearEncoder', in_len=16, out_len=1,
-        ffn_cfg=dict(type='SLP', in_channels=256))
+
 # #mmWave length is 256
 # model_cfg_depth = dict(type='LinearEncoder', in_len=108, out_len=1,
-#         ffn_cfg=dict(type='SLP', in_channels=256))
+#         ffn_cfg=dict(type='SLP', in_channels=256))   
 
-adapter_cfgs = {
-    ('realsense_camera_depth', 'node_1'): depth_cfg,
-    ('realsense_camera_depth', 'node_2'): depth_cfg,
-    ('realsense_camera_depth', 'node_3'): depth_cfg,
-    ('zed_camera_left', 'node_1'): zed_cfg,
-    ('zed_camera_left', 'node_2'): zed_cfg,
-    ('zed_camera_left', 'node_3'): zed_cfg,
- #   ('zed_camera_left', 'node_4'): zed_cfg,
-    ('range_doppler', 'node_1'): rdoppler_cfg,
-    ('range_doppler', 'node_2'): rdoppler_cfg,
-    ('range_doppler', 'node_3'): rdoppler_cfg,
- #   ('range_doppler', 'node_4'): rdoppler_cfg,
-    ('mic_waveform', 'node_1'): audio_cfg,
-    ('mic_waveform', 'node_2'): audio_cfg,
-    ('mic_waveform', 'node_3'): audio_cfg,
- #   ('mic_waveform', 'node_4'): audio_cfg
-
-}
+model_cfgs = {('zed_camera_left', 'node_1'): model_cfg_img,
+              ('zed_camera_left', 'node_2'): model_cfg_img,
+              ('zed_camera_left', 'node_3'): model_cfg_img,
+            #   ('realsense_camera_depth', 'node_1'): model_cfg_depth,
+            #   ('realsense_camera_depth', 'node_2'): model_cfg_depth,
+            #   ('realsense_camera_depth', 'node_3'): model_cfg_depth
+              }
+              # ('zed_camera_left', 'node_4'): model_cfg
+backbone_cfgs = {'zed_camera_left': zed_backbone_cfg}
 
 model = dict(type='KFDETR',
         output_head_cfg=dict(type='OutputHead',
@@ -145,7 +125,7 @@ model = dict(type='KFDETR',
          to_cm=True,
          mlp_dropout_rate=0.0
     ),
-    model_cfgs=adapter_cfgs,
+    model_cfgs=model_cfgs,
     backbone_cfgs=backbone_cfgs,
     track_eval=True,
     pos_loss_weight=1,
@@ -156,7 +136,7 @@ model = dict(type='KFDETR',
 
 
 # orig_bs = 2
-# orig_lr = 1e-4
+# orig_lr = 1e-4 
 # factor = 4
 data = dict(
     samples_per_gpu=4,

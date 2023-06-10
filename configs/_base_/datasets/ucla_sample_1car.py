@@ -12,7 +12,6 @@ img_pipeline = [
 ]
 
 
-
 r50_pipeline = [
     dict(type='LoadFromNumpyArray', force_float32=True),
     dict(type='RandomFlip', flip_ratio=0.0),
@@ -37,18 +36,16 @@ azimuth_pipeline = [
 ]
 
 range_pipeline = [
-    dict(type='LoadFromNumpyArray', force_float32=True, transpose=True, force_rgb=False),
-    dict(type='Resize', img_scale=(256, 16), keep_ratio=True),
+    dict(type='LoadFromNumpyArray', force_float32=True, transpose=True),
+    dict(type='Resize', img_scale=(256, 256), keep_ratio=False),
     dict(type='RandomFlip', flip_ratio=0.0),
-    dict(type='Normalize', mean=[4353], std=[705], to_rgb=True),
+    dict(type='Normalize', mean=[4353], std=[705], to_rgb=False),
     dict(type='DefaultFormatBundle'),
     dict(type='Collect', keys=['img']),
 ]
 
 audio_pipeline = [
-    #dict(type='LoadFromNumpyArray', force_float32=True, transpose=True),
-    dict(type='LoadAudio', n_fft=75),
-    dict(type='Resize', img_scale=(32, 32), keep_ratio=False),
+    dict(type='LoadFromNumpyArray', force_float32=True, transpose=True),
     dict(type='RandomFlip', flip_ratio=0.0),
     dict(type='DefaultFormatBundle'),
     dict(type='Collect', keys=['img']),
@@ -64,11 +61,11 @@ pipelines = {
     'mic_waveform': audio_pipeline,
     'realsense_camera_img': img_pipeline,
     'realsense_camera_depth': img_pipeline
-}
+} 
 
 valid_mods=['mocap', 'zed_camera_left', 'zed_camera_depth', 'zed_camera_left_r50',
             'range_doppler', 'azimuth_static', 'mic_waveform',
-            'realsense_camera_depth', 'realsense_camera_img']
+            'realsense_camera_depth', 'realsense_camera_img', 'mmWave']
 
 valid_nodes=[1,2,3]
 
@@ -150,7 +147,7 @@ valset=dict(type='HDF5Dataset',
     pipelines=pipelines,
 )
 
-data_root = '~/Desktop/mcp-sample-dataset/test'
+data_root = '~/Desktop/ssd4t/mcp-sample-dataset/test'
 testset=dict(type='HDF5Dataset',
     cacher_cfg=dict(type='DataCacher',
         hdf5_fnames=[
