@@ -115,7 +115,7 @@ Please download the pretrained checkpoints [Here](https://drive.google.com/drive
 Note that for single-view case (Baseline 1 in the paper), please make sure to use the checkpoints corresponding to the code and data of your choice. 
 
 For example, if we use view 3 data (single view, good lighting condition) and late-all branch code (single view, late fusion, all modalities), we should download
-["Checkpoints/Single-view/Late Fusion/All Modalities/logs_sal_goodlight_view3.zip"](https://drive.google.com/file/d/16JjY2d2J0JnWJNI1Mpy7om7m1MKzF8Qj/view?usp=sharing)
+["Checkpoints/Single-view/Late Fusion/All Modalities/logs_sal_goodlight_view3.zip"](https://drive.google.com/file/d/1XmV5MYzMy5lmSDJN-sArFHD8ZDj0sjca/view?usp=sharing)
 
 After downloading the checkpoint, please rename it to **logs/** and put it under "mmtracking" folder using this hierachy. 
 
