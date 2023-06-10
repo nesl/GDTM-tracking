@@ -104,7 +104,7 @@ The final data structure should be like following:
 ```
 Note that you only need test/ if you are running test from checkpoints only.
 #### Specify Filepath
-Open mmmtracking/configs/\_base\_/datasets/ucla_1car_early_fusion.py
+Open mmtracking/configs/\_base\_/datasets/ucla_1car_early_fusion.py
 In Line 75, Line 114, and Line 153, change the data_root to absolute path:
 e.g. ~/Desktop/... -> /home/USER_NAME/Desktop/...
 
@@ -122,16 +122,17 @@ After downloading the checkpoint, please rename it to **logs/** and put it under
 ```
 └── Desktop/mmtracking/
     └── logs/
-        ├── val
-        ├── epoch_xx.pth
-        └── latest.pth
+        └── early_fusion_zed_mmwave_audio_ucla/
+            ├── val
+            ├── epoch_xx.pth
+            └── latest.pth (to be created)
 ```
-where the "latest.pth" above is created by
+where the "latest.pth" above is created by (in a terminal in early\_fusion\_zed\_mmwave\_audio\_ucla/):
 ```
 ln -s epoch_40.pth latest.pth
 ```
 
-Then, you could run the evaluations by running (still in terminal under ~/Desktop/mmtracking)
+Then, you could run the evaluations by running (still in terminal under ~/Desktop/mmtracking, make sure you have used "conda activate iobt")
 ```
 bash ./tools/test_from_config_nll_local.sh ./configs/mocap/early_fusion_zed_mmwave_audio_ucla.py 1
 ```
