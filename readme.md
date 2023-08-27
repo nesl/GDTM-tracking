@@ -1,8 +1,8 @@
 
 
-# GDTM-Tracking
+# GTDM-Tracking
 
-**GDTM** is a new multi-hour dataset collected with a network of multimodal sensors for the indoor geospatial tracking problem. It features time-synchronized steoreo-vision camera, LiDAR camera, mmWave radar, and microphone arrays, as well as ground truth data containing the position and orientations of the sensing target (remote controlled cars on a indoor race track) and the sensor nodes. For details of the dataset please refer to [GitHub](https://github.com/nesl/GDTM) and PDF (still under review).
+**GTDM** is a new multi-hour dataset collected with a network of multimodal sensors for the indoor geospatial tracking problem. It features time-synchronized steoreo-vision camera, LiDAR camera, mmWave radar, and microphone arrays, as well as ground truth data containing the position and orientations of the sensing target (remote controlled cars on a indoor race track) and the sensor nodes. For details of the dataset please refer to [GitHub](https://github.com/nesl/GDTM) and PDF (still under review).
 
 This repository contains our baseline applications described in PDF (still under review) built to use GTDM data. It features two architectures (early fusion and late fusion and two choices of sensor sets (camera only and all-modalities) to track the locations of a target RC car.
 
