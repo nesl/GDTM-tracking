@@ -20,14 +20,14 @@ NVIDIA-driver 525.105.17
 The code should be compatible with most Anaconda, NVIDIA-driver, and Ubuntu versions available around 2023/06.
 
 ### Code Repository Structure
-Please select the desired branch for your desired data/model combinations. Details described in **Baseline 1** section of [GitHub](https://github.com/nesl/GDTM).
+Please select the desired branch for your desired data/model combinations. Details described in **Baseline 1** section of [PDF](https://arxiv.org/abs/2402.14136).
 
  - master: early fusion, all modalities 
  - early-cam: early fusion, camera only 
  - late-cam: late fusion, camera only
  - late-all: late fusion, allmodalities
 
-Additional, this repository contains our efforts towards building a model resilient to the placement locations and orientations of its sensor nodes.  Details described in **Baseline 2** section of [GitHub](https://github.com/nesl/GDTM).
+Additional, this repository contains our efforts towards building a model resilient to the placement locations and orientations of its sensor nodes.  Details described in **Baseline 2** section of [PDF](https://arxiv.org/abs/2402.14136).
 - multi-cam: late fusion 3D, camera only, multiple viewpoints (limited tracking performance)
 - multi-camdepth: late fusion 3D, camera + LiDAR camera depth, multiple viewpoints
 
