@@ -2,7 +2,7 @@
 
 # GTDM-Tracking
 
-**GTDM** is a new multi-hour dataset collected with a network of multimodal sensors for the indoor geospatial tracking problem. It features time-synchronized steoreo-vision camera, LiDAR camera, mmWave radar, and microphone arrays, as well as ground truth data containing the position and orientations of the sensing target (remote controlled cars on a indoor race track) and the sensor nodes. For details of the dataset please refer to [GitHub](https://github.com/nesl/GDTM) and PDF (still under review).
+**GTDM** is a new multi-hour dataset collected with a network of multimodal sensors for the indoor geospatial tracking problem. It features time-synchronized steoreo-vision camera, LiDAR camera, mmWave radar, and microphone arrays, as well as ground truth data containing the position and orientations of the sensing target (remote controlled cars on a indoor race track) and the sensor nodes. For details of the dataset please refer to [GitHub](https://github.com/nesl/GDTM) and [PDF](https://arxiv.org/abs/2402.14136).
 
 This repository contains our baseline applications described in PDF (still under review) built to use GTDM data. It features two architectures (early fusion and late fusion and two choices of sensor sets (camera only and all-modalities) to track the locations of a target RC car.
 
@@ -20,14 +20,14 @@ NVIDIA-driver 525.105.17
 The code should be compatible with most Anaconda, NVIDIA-driver, and Ubuntu versions available around 2023/06.
 
 ### Code Repository Structure
-Please select the desired branch for your desired data/model combinations. Details described in **Baseline 1** section of PDF (Still under review).
+Please select the desired branch for your desired data/model combinations. Details described in **Baseline 1** section of [GitHub](https://github.com/nesl/GDTM).
 
  - master: early fusion, all modalities 
  - early-cam: early fusion, camera only 
  - late-cam: late fusion, camera only
  - late-all: late fusion, allmodalities
 
-Additional, this repository contains our efforts towards building a model resilient to the placement locations and orientations of its sensor nodes.  Details described in **Baseline 2** section of PDF (Still under review).
+Additional, this repository contains our efforts towards building a model resilient to the placement locations and orientations of its sensor nodes.  Details described in **Baseline 2** section of [GitHub](https://github.com/nesl/GDTM).
 - multi-cam: late fusion 3D, camera only, multiple viewpoints (limited tracking performance)
 - multi-camdepth: late fusion 3D, camera + LiDAR camera depth, multiple viewpoints
 
