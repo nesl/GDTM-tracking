@@ -214,8 +214,8 @@ If you find this project useful in your research, please consider cite:
 @inproceedings{wang2023gdtm,
     title={GTDM: An Indoor Geospatial Tracking Dataset with Distributed Multimodal Sensors},
     author={Jeong, Ho Lyun and Wang, Ziqi and Samplawski, Colin and Wu, Jason and Fang, Shiwei and Kaplan, Lance and Ganesan, Deepak and Marlin, Benjamin and Srivastava, Mani},
-    booktitle={submission to the Thirty-seventh Annual Conference on Neural Information Processing Systems Datasets and Benchmarks Track},
-    year={2023}
+    year={2024},
+    journal={arXiv preprint arXiv:2402.14136}
 }
 ```
 The architecture of this work is adapted from/inspired by:
